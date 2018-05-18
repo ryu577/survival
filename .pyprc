@@ -5,7 +5,6 @@ index-servers=pypi
  
  
 [pypi]
- 
-repository = https://pypi.python.org/pypi
- 
-username = ryu577
+repository:https://pypi.python.org/pypi
+username: ryu577
+password: pypipass
