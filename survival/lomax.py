@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.stats import lomax
-from basemodel import *
+from survival.basemodel import *
 
 class Lomax(Base):
     def __init__(self, k = None, lmb = None, ti = None, xi = None):

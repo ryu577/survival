@@ -1,6 +1,6 @@
 import numpy as np
-from sigmoid import *
-from basemodel import *
+from survival.sigmoid import *
+from survival.basemodel import *
 
 class LogLogistic(Base):
     def __init__(self,alp=1, beta=0.5, ti = None, xi = None):

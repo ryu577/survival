@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.stats import exponweib
-from Sigmoid import *
-from BaseModel import *
+from survival.sigmoid import *
+from survival.basemodel import *
 
 class Weibull(Base):
     def __init__(self,k=None,lmb=None,ti=None,xi=None):

@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.stats import norm
-from sigmoid import *
-from basemodel import *
+from survival.sigmoid import *
+from survival.basemodel import *
 
 class Lognormal(Base):
     def __init__(self,mu=0, sigma=0.5, ti= None, xi=None):
