@@ -84,3 +84,4 @@ def relative_nonparametric(recoveryTimes, currentCensor = 600.0, intervention_co
     return taus[np.argmax(relSavings)]
 
 
+

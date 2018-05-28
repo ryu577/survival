@@ -3,11 +3,12 @@ from survival.sigmoid import *
 from survival.basemodel import *
 
 class LogLogistic(Base):
-    def __init__(self,alp=1, beta=0.5, ti = None, xi = None):
+    def __init__(self, alp=1, beta=0.5, ti = None, xi = None):
         if ti is not None:
             self.train_org = ti
             self.train_inorg = xi
-            self.newtonRh(params = np.array([150, 5]))
+            #self.newtonRh(params = np.array([150, 5]))
+            self.gradient_descent(params = np.array([150, 5]))
         else:
             self.train = []
             self.test = []
@@ -151,4 +152,4 @@ def bisection(bisection_fn, a=1e-6, b=2000):
         else:
             b=c
 
-# Georges Simenone
+

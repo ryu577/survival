@@ -8,7 +8,11 @@ class Weibull(Base):
         if ti is not None:
             self.train_org = ti
             self.train_inorg = xi
-            self.newtonRh()
+            self.t = ti
+            self.x = xi
+            self.x_samples = None
+            self.x_censored = None
+            [self.k, self.lmb] = self.gradient_descent()
         else:
             self.train = []
             self.test = []
@@ -244,7 +248,7 @@ class Weibull(Base):
             else:
                 b=c
 
-    def optimal_threshold(self, reboot_cost):
+    def optimalWaitThreshold(self, reboot_cost):
         return self.lmb ** (self.k / (self.k - 1)) / (reboot_cost * self.k) ** (1 / (self.k - 1))
 
     def samples(self, size = 1000):
