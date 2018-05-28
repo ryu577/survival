@@ -5,7 +5,8 @@ import scipy.integrate as integrate
 
 class Base(object):
     '''
-    Numerically integrates the PDF and obtains the expected value of x conditional on x less than y.
+    Numerically integrates the PDF and obtains the 
+    expected value of x conditional on x less than y.
     '''
     def Ex_x_le_y(self,xs = np.arange(1,100000)*0.01):
         vals = []
@@ -18,11 +19,12 @@ class Base(object):
         ress = integrate.quad(lambda x: x * self.pdf(x,k,lmb), t1, t2)
         prob = self.cdf(t2,k,lmb) - (self.cdf(t1,k,lmb) if t1 > 0 else 0)
         return ress[0]/prob
-
-    '''
-    Combines the expected downtime when the recovery happens before and after the wait threshold.
-    '''
+    
     def expected_downtime(self,Y,xs=np.arange(1,100000)*0.01,lmb=0,reg='log'):
+        '''
+        Combines the expected downtime when the recovery happens before 
+        and after the wait threshold.
+        '''
         highterms = self.survival(xs)*(xs+Y)
         lowterms = self.Ex_x_le_y(xs)
         et = lowterms + highterms
@@ -33,6 +35,9 @@ class Base(object):
         elif reg == 'sqr':
             et += lmb*xs**2
         return et
+
+    def hazard(self, t):
+        return self.pdf(t)/self.survival(t)
 
     def determine_params(self, k=-1, lmb=-1, params=None):
         if params is not None:
@@ -46,6 +51,9 @@ class Base(object):
         return [k,lmb]
 
     def prob_TgrTau(self,xs=np.arange(1,100000)*0.01,lmb=0.2,t0=900.0,Y=480.0):
+        '''
+        The probability that the current distribution is greater than t0.
+        '''
         return lmb*((xs>t0)*(self.survival(t0)-self.survival(xs)) + (xs> (t0-Y))*self.survival(xs))
 
     def expectedT(self,tau,k=None,lmb=None,params = None):
