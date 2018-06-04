@@ -1,44 +1,67 @@
 import matplotlib.pyplot as plt
-from survival.weibull import *
-from survival.lomax import *
-from survival.lognormal import *
-from survival.loglogistic import *
-from survival.non_parametric import *
+from distributions.weibull import *
+from distributions.lomax import *
+from distributions.lognormal import *
+from distributions.loglogistic import *
+from nonparametric.non_parametric import *
 from markovchains.markovchains import *
 from datetime import datetime
 from numpy import genfromtxt
 import os
-import matplotlib.pyplot as plt
 
+# k=1.1; lmb=0.5; intervention_cost=200; sample_size=5000; censor_level=200; prob=1.0
 ## 2.1 Comparison of non-parametric approaches when we know the distribution.
-
-def comparisons(k=1.1, lmb=0.5, intervention_cost=200, sample_size=1000):
+def comparisons(k=1.1, lmb=0.5, intervention_cost=200, sample_size=5000, censor_level=400, prob=1.0):
+	distr_map = {'Lomax' : 1, 'Weibull' : 2, 'LogLogistic' : 3}
 	l = Lomax(k=k, lmb=lmb)
 	opt_tau = k*intervention_cost-1/lmb
 	print("Optimal threshold: " + str(opt_tau))
 	samples = l.samples(size=sample_size)
-	l1 = Lomax(ti=samples, xi=np.array([1e-3])) # for now, we have to add a dummy xi. Should be inconsequential.
-	w1 = Weibull(ti=samples, xi=np.array([1e-3]))
-	ll1 = LogLogistic(ti=samples, xi=np.array([1e-3]))
+	xi = np.array([1e-3])
+	unifs = np.random.uniform(size=sample_size)
+	if censor_level is not None:
+		ti = samples[(samples<=censor_level) + (unifs>prob)]
+		if sum(samples>censor_level) > 0:
+			xi = np.ones(sum( (samples>censor_level) * (unifs<=prob)))*censor_level
+	else:
+		ti = samples
+	if len(xi) == 0:
+		ti = samples
+		xi = np.array([1e-3])
+	l1 = Lomax(ti=ti, xi=xi) # for now, we have to add a dummy xi. Should be inconsequential.
 	print("Original lomax kappa was:" + str(k) + "\nand for this one, " + str(l1.k) + "\nOriginal lambda was:" + str(lmb) + "\nand this one:" + str(l1.lmb))
-	opt_tau_0 = l1.optimalWaitThreshold(200)
-	opt_tau_w = w1.optimalWaitThreshold(200)
-	#opt_tau_ll = ll1.optimalWaitThreshold(200)
-	print("Based on this distribution, the optimum threshold is:" + str(opt_tau_0))
+	w1 = Weibull(ti=ti, xi=xi)
+	ll1 = LogLogistic(ti=ti, xi=xi)
+	opt_tau_l = l1.optimal_wait_threshold(intervention_cost)
+	opt_tau_w = w1.optimal_wait_threshold(intervention_cost)
+	opt_tau_ll = ll1.optimal_wait_threshold(intervention_cost)
+	print("Based on this distribution, the optimum threshold is:" + str(opt_tau_l))
+	print("Based on log logistic, the optimum threshold is:" + str(opt_tau_ll))
 	costs = []
 	#costs1 = []
-	for tau in np.arange(10,600,1):
+	distr = ll1
+	name = l1.__class__.__name__
+	for tau in np.arange(10,900,1):
 		# since there is no censoring, the data shouldn't matter.
-		(p,t) = constr_matrices_data_distr(tau, ti=samples, intervention_cost=intervention_cost)
+		(p,t) = constr_matrices_data_distr(tau, ti=ti, xi=xi, intervention_cost=intervention_cost, distr=distr)
 		costs.append(time_to_absorbing(p,t,2)[0])
 		#costs1.append(relative_nonparametric(samples, tau, intervention_cost))
-	opt_tau_1 = np.arange(10,600,1)[np.argmin(costs)]
+	opt_tau_1 = np.arange(10,900,1)[np.argmin(costs)]
 	print("Optimal threshold based on matrix-based non-parametric: " + str(opt_tau_1))
-	opt_tau_2 = relative_nonparametric(samples, 600.0, intervention_cost)
-	print("Optimal threshold based on relative-savings based non-parametric: " + str(opt_tau_2))
+	#opt_tau_2 = relative_nonparametric(samples, 600.0, intervention_cost)
+	opt_tau_2 = 0
+	#print("Optimal threshold based on relative-savings based non-parametric: " + str(opt_tau_2))
 	filetxt = datetime.now().year*1e10 + datetime.now().month*1e8 + datetime.now().day*1e6 + datetime.now().hour*1e4 + datetime.now().minute*1e2 + datetime.now().second
-	np.savetxt('./data/lomax-' + str(filetxt) + '.csv', np.array([intervention_cost, sample_size, k, lmb, opt_tau, opt_tau_0, opt_tau_1, opt_tau_2]), delimiter=',', )
-	return np.array([intervention_cost, sample_size, k, lmb, opt_tau, opt_tau_0, opt_tau_1, opt_tau_2])
+	#np.savetxt('./data/censored/lomax-' + str(filetxt) + '.csv', np.array([intervention_cost, sample_size, k, lmb, opt_tau, opt_tau_l, opt_tau_1, censor_level, name]), delimiter=',', )
+	txt = str(intervention_cost)+","+str(sample_size)+"," + str(k) + "," + str(lmb) + "," + str(opt_tau) + "," \
+		+ str(opt_tau_1) + "," + str(censor_level)+"," + str(distr_map[name])+","+str(prob)+"\n"
+	f = open('./data/censored/lomax-' + str(filetxt) + '.csv', 'w')
+	f.write(txt)
+	f.close()
+	plt.plot(np.arange(10,900,1), costs)
+	plt.savefig('./plots/' + str(filetxt) + '.png', bbox_inches='tight')
+	plt.close()
+	return np.array([intervention_cost, sample_size, k, lmb, opt_tau, opt_tau_l, opt_tau_1, censor_level])
 
 
 def non_parametric_comparison():
@@ -70,4 +93,27 @@ def non_parametric_comparison():
 	plt.ylabel('Optimum threshold values')
 	plt.show()
 
+
+def test_lomax_matrix(k=1.1, lmb=0.5, intervention_cost=200):
+    l = Lomax(k, lmb)
+    opt_tau = k*intervention_cost-1/lmb
+    print("Optimal threshold: " + str(opt_tau))
+    costs = []
+    probs = []
+    for tau in np.arange(10,900,1):
+        (p,t) = l.construct_matrices(tau, intervention_cost)
+        costs.append(time_to_absorbing(p,t,2)[0])
+        probs.append(steady_state(p, t)[2])
+    print("Optimal thresholds based on time to absorbing state.")
+    print(np.arange(10,900,1)[np.argmin(costs)])
+    print("Optimal thresholds based on steady state proportions.")
+    print(np.arange(10,900,1)[np.argmax(probs)])
+    #plt.plot(costs)
+    plt.plot(np.arange(10,900,1), probs)
+    plt.show()
+
+
+
+xs=np.arange(0.1,150,0.1)
+ys=[self.loglik(self.train_org, self.train_inorg, i, ll1.beta) for i in xs]
 

@@ -1,57 +1,70 @@
 import numpy as np
-from survival.sigmoid import *
-from survival.basemodel import *
+from misc.sigmoid import *
+from distributions.basemodel import *
+
 
 class LogLogistic(Base):
-    def __init__(self, alp=1, beta=0.5, ti = None, xi = None):
+    def __init__(self, alp=1, beta=0.5, ti = None, xi = None, params=np.array([500,5]), gamma=0, params0=np.array([167.0, 0.3]), verbose=False):
         if ti is not None:
             self.train_org = ti
             self.train_inorg = xi
             #self.newtonRh(params = np.array([150, 5]))
-            self.gradient_descent(params = np.array([150, 5]))
+            self.gradient_descent(params = params, gamma=gamma, params0=params0, verbose=verbose)
         else:
             self.train = []
             self.test = []
             self.train_org = []
             self.train_inorg = []
-            self.alp = alp
-            self.beta = beta
+            self.alpha = self.lmb = alpha
+            self.beta = self.k = beta
             self.params = []
 
-    def pdf(self,x,alp=None,beta=None):
-        if alp is None:
-            alp = self.alp
-            beta = self.beta
-        return (beta/alp)*(x/alp)**(beta-1)/(1+(x/alp)**beta)**2
+    def set_params(self, alpha, beta, params=None):
+        if params is not None:
+            [alpha, beta] = params[:2]
+        self.k = self.beta = beta
+        self.lmb = self.alpha = alpha
+        self.params = [alpha, beta]
 
-    def cdf(self,x,alp=None,beta=None):
-        if alp is None:
-            alp = self.alp
-            beta = self.beta
-        return 1/(1+(x/alp)**-beta)
+    def determine_params(self, k, lmb, params):
+        '''
+        Determines the parameters. Defined in basemodel.py
+        '''
+        return super(LogLogistic, self).determine_params(k, lmb, params)
 
-    def inv_cdf(self, u, alp=None, beta=None):
-        if alp is None:
-            alp = self.alp
-            beta = self.beta
-        return alp*(1/u - 1)**(-1/beta)
+    def pdf(self,x,alpha=None,beta=None):
+        [beta, alpha] = self.determine_params(beta, alpha, None)
+        return (beta/alpha)*(x/alpha)**(beta-1)/(1+(x/alpha)**beta)**2
 
-    def samples(self, size=1000, alp=None, beta=None):
-        return self.inv_cdf(np.random.uniform(size=size), alp, beta)
+    def cdf(self,x,alpha=None,beta=None):
+        [beta, alpha] = self.determine_params(beta, alpha, None)
+        return 1/(1+(x/alpha)**-beta)
 
-    def logpdf(self,x,alp,beta):
-        return np.log(beta)-np.log(alp) +(beta-1)*(np.log(x) - np.log(alp)) - 2*np.log(1+(x/alp)**beta)
+    def inv_cdf(self, u, alpha=None, beta=None):
+        [beta, alpha] = self.determine_params(beta, alpha, None)
+        return alpha*(1/u - 1)**(-1/beta)
 
-    def survival(self,x,alp=None,beta=None):
-        return 1-self.cdf(x,alp,beta)
+    def samples(self, size=1000, alpha=None, beta=None):
+        [beta, alpha] = self.determine_params(beta, alpha, None)
+        return self.inv_cdf(np.random.uniform(size=size), alpha, beta)
 
-    def logsurvival(self,x,alp,beta):
-        return np.log(self.survival(x,alp,beta))
+    def logpdf(self,x,alpha,beta):
+        [beta, alpha] = self.determine_params(beta, alpha, None)
+        return np.log(beta)-np.log(alpha) +(beta-1)*(np.log(x) - np.log(alpha)) - 2*np.log(1+(x/alpha)**beta)
 
-    def loglik(self,t,x,alp,beta):
-        return sum(self.logpdf(t,alp,beta)) + sum(self.logsurvival(x,alp,beta))
+    def survival(self,x,alpha=None,beta=None):
+        [beta, alpha] = self.determine_params(beta, alpha, None)
+        return 1-self.cdf(x,alpha,beta)
 
-    def grad(self,t,x,alp,beta):
+    def logsurvival(self,x,alpha,beta):
+        [beta, alpha] = self.determine_params(beta, alpha, None)
+        return np.log(self.survival(x,alpha,beta))
+
+    def loglik(self,t,x,alpha,beta):
+        [beta, alpha] = self.determine_params(beta, alpha, None)
+        return sum(self.logpdf(t,alpha,beta)) + sum(self.logsurvival(x,alpha,beta))
+
+    def grad(self,t,x,alp=None,beta=None):
         n = len(t)
         m = len(x)
         delalp = -n*beta/alp +2*beta/alp**(beta+1) * sum(t**beta/(1+(t/alp)**beta)) + beta/alp**(beta+1)*sum(x**beta/(1+(x/alp)**beta))
@@ -64,7 +77,8 @@ class LogLogistic(Base):
         delbeta = (self.loglik(t,x,alp,beta+eps) - self.loglik(t,x,alp,beta-eps))/2/eps
         return np.array([delalp,delbeta])
 
-    def gradient_descent(self, numIter=2001, params = np.array([2.0,2.0])):
+    '''
+    def gradient_descent(self, numIter=2001, params = np.array([167.0, 0.3])):
         for i in range(numIter):
             #lik = self.loglik(self.train_org,self.train_inorg,params[0],params[1],params[2])
             directn = self.grad(self.train_org,self.train_inorg,params[0],params[1])
@@ -81,9 +95,10 @@ class LogLogistic(Base):
             if i%100 == 0:
                 print("Iteration " + str(i) + " ,objective function: " + str(lik) + " \nparams = " + str(params) + " \nGradient = " + str(directn))
                 print("\n########\n")
-        [self.alpha,self.beta] = params
-        self.params = params
+        #[self.alpha,self.beta] = params
+        self.set_params(params[0], params[1], params)
         return params
+    '''
 
     def numerical_hessian(self,t,x,k=0.5,lmb=0.3):
         eps = 1e-4
@@ -100,6 +115,7 @@ class LogLogistic(Base):
     def hessian(self,t,x,k=0.5,lmb=0.3):
         return self.numerical_hessian(t,x,k,lmb)
 
+    '''
     def newtonRh(self, numIter=21, params = np.array([.1,.1])):
         steps = {1e-3:0, 0.01:0, 0.1:0, 0.5:0, 1.0:0, 2.0:0, 2.5:0, 3.0:0, 3.5:0, 3.7:0, 4.0:0, 4.5:0, 4.7:0, 5.5:0, 6.0:0, 6.5:0, 7.0:0, 7.5:0, 8.0:0, 8.5:0, 9.0:0, 9.5:0, 10.0:0, 12.0:0, 15.0:0, 20.0:0, 25.0:0, 27.0:0, 35.0:0, 37.0:0, 40.0:0, 50.0:0,100.0:0,200.0:0,500.0:0,1000.0:0}
         for i in range(numIter):
@@ -126,11 +142,11 @@ class LogLogistic(Base):
             params = params2
             if i % 10 == 0:
                 print("Iteration " + str(i) + " ,objective function: " + str(lik) + " \nparams = " + str(params) + " \nGradient = " + str(directn) + "\n##\n\n")
-        [self.alpha, self.beta] = params
-        self.alp = self.alpha
-        self.params = params
+        #[self.alpha, self.beta] = params
+        self.set_params(params[0], params[1], params)
         print(steps)
         return params
+    '''
 
 def fixedAlp(beta):
     alp = 79.82

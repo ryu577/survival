@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.stats import norm
-from survival.sigmoid import *
-from survival.basemodel import *
+from misc.sigmoid import *
+from distributions.basemodel import *
 
 class Lognormal(Base):
     def __init__(self,mu=0, sigma=0.5, ti= None, xi=None):
@@ -58,6 +58,7 @@ class Lognormal(Base):
         dellmb = (self.loglik(t,x,mu,sigma+eps) - self.loglik(t,x,mu,sigma-eps))/2/eps
         return np.array([delk,dellmb])
 
+    '''
     def gradient_descent(self, numIter=2001, params = np.array([1.0,1.0])):
         for i in range(numIter):
             #lik = self.loglik(self.train_org,self.train_inorg,params[0],params[1],params[2])
@@ -78,6 +79,7 @@ class Lognormal(Base):
         [self.mu,self.sigma] = params
         self.params = params
         #return params
+    '''
 
 
 #[1] http://home.iitk.ac.in/~kundu/paper160.pdf

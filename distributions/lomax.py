@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.stats import lomax
-from survival.basemodel import *
+from distributions.basemodel import *
 
 class Lomax(Base):
     '''
@@ -195,15 +195,16 @@ class Lomax(Base):
                 print("\n########\n")
         return params
 
+    '''
     def newtonRh(self, numIter=101, params = np.array([.1,.1]), verbose=False):
-        '''
+        """
         Fits the parameters of a Lomax distribution to data (censored and uncensored).
         Uses the Newton Raphson method for explanation, see: https://www.youtube.com/watch?v=acsSIyDugP0
         args:
             numIter: The maximum number of iterations for the iterative method.
             params: The initial guess for the shape and scale parameters respectively.
             verbose: Set to true for debugging. Shows progress as it fits data.
-        '''
+        """
         for i in range(numIter):
             directn = self.grad(self.train_org,self.train_inorg,params[0],params[1])
             if sum(abs(directn)) < 1e-5:
@@ -233,8 +234,9 @@ class Lomax(Base):
         [self.k, self.lmb] = params
         self.params = params
         return params
+    '''
 
-    def optimalWaitThreshold(self, intervention_cost, k=None, lmb=None):
+    def optimal_wait_threshold(self, intervention_cost, k=None, lmb=None):
         '''
         Gets the optimal time one should wait for a Lomax recovery before intervention.
         args:

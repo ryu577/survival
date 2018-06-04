@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.stats import exponweib
-from survival.sigmoid import *
-from survival.basemodel import *
+from misc.sigmoid import *
+from distributions.basemodel import *
 
 class Weibull(Base):
     def __init__(self,k=None,lmb=None,ti=None,xi=None):
@@ -12,7 +12,7 @@ class Weibull(Base):
             self.x = xi
             self.x_samples = None
             self.x_censored = None
-            [self.k, self.lmb] = self.gradient_descent()
+            [self.k, self.lmb] = self.gradient_descent(params=np.array([.5,.3]))
         else:
             self.train = []
             self.test = []
@@ -32,7 +32,8 @@ class Weibull(Base):
         return super(Weibull, self).determine_params(k, lmb, params)
 
     def logpdf(self,x,k,lmb):
-        return np.log(k) - k*np.log(lmb) + (k-1)*np.log(x) - (x/lmb)**k
+        with np.errstate(all='ignore'):
+            return np.log(k) - k*np.log(lmb) + (k-1)*np.log(x) - (x/lmb)**k
 
     def pdf(self,x,k=-1,lmb=-1,params=None):
         [k,lmb] = self.determine_params(k,lmb,params)
@@ -57,7 +58,8 @@ class Weibull(Base):
         return np.array([delk,dellmb])
 
     def logsurvival(self,t,k=-1,lmb=-1,params=None):
-        return -(t/lmb)**k
+        with np.errstate(all='ignore'):
+            return -(t/lmb)**k
 
     def hazard(self,x,k,lmb):
         [k,lmb] = self.determine_params(k,lmb,params)
@@ -157,6 +159,7 @@ class Weibull(Base):
             dellmb = (self.loglik(t,x,k,lmb+eps) - self.loglik(t,x,k,lmb-eps))/2/eps
             return np.array([delk,dellmb])
 
+    '''
     def gradient_descent(self, numIter=2001, params = np.array([.5,.3])):
         for i in range(numIter):
             #lik = self.loglik(self.t, self.x, params[0], params[1], params, self.x_samples, self.x_censored)
@@ -175,6 +178,7 @@ class Weibull(Base):
                 print("Iteration " + str(i) + " ,objective function: " + str(lik) + " \nparams = " + str(params) + " \nGradient = " + str(directn))
                 print("\n########\n")
         return params
+    '''
 
     def newtonRh(self,numIter=21, params = np.array([.1,100])):
         for i in range(numIter):
@@ -248,7 +252,7 @@ class Weibull(Base):
             else:
                 b=c
 
-    def optimalWaitThreshold(self, reboot_cost):
+    def optimal_wait_threshold(self, reboot_cost):
         return self.lmb ** (self.k / (self.k - 1)) / (reboot_cost * self.k) ** (1 / (self.k - 1))
 
     def samples(self, size = 1000):

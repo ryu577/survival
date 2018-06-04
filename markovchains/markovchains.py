@@ -35,7 +35,7 @@ def time_to_absorbing(
     return np.insert(x,absorbing_state,0)
 
 
-def montecarlo(
+def absorbingstatemontecarlo(
         p = np.matrix([
               [0,.2,.4,.4],
               [.2,0,.4,.4],
@@ -71,7 +71,7 @@ def montecarlo(
 
 
 def steadystatemontecarlo(
-    p = np.matrix([
+        p = np.matrix([
               [0,.2,.4,.4],
               [.2,0,.4,.4],
               [.2,.3,0,.5],
@@ -83,15 +83,16 @@ def steadystatemontecarlo(
               [1,1,1,1],
               [1,1,1,1]
               ]),
-        starting_state = 2
+        starting_state = 2 #Where to start simulation, shouldn't matter.
   ):
     '''
-    Given the transition probabilities and transition times matrices, outputs the proportion of time spent in each state via simulation and closed form.
+    Given the transition probabilities and transition times matrices, outputs the
+    proportion of time spent in each state via simulation and closed form.
     The two should always be close.
     '''
     states = np.zeros(p.shape[0])
     states_w_times = np.zeros(p.shape[0])
-    curr_state = starting_state
+    curr_state = starting_state #Shouldn't matter.
     for i in range(10000):
       next_state = np.random.choice(p.shape[0], p=np.array(p[curr_state,])[0])
       states[curr_state] = states[curr_state] + 1
@@ -105,6 +106,57 @@ def steadystatemontecarlo(
     props1 = np.multiply(res[1].T,res[2])/sum(np.multiply(res[1].T,res[2]).T)
     props2 = res[0]
     return [props1, props2]
+
+
+def steady_state_props(
+  p=np.matrix([
+              [0,.2,.4,.4],
+              [.2,0,.4,.4],
+              [.2,.3,0,.5],
+              [.3,.4,.3,0]
+              ])):
+    '''
+    Calculates the proportion time spend in each state
+    in steady state.
+    Based on the method outlined in the answer here:
+    https://math.stackexchange.com/a/2452452/155881
+    args:
+      p: The matrix or 2d array with transition probabilities.      
+    '''
+    dim = p.shape[0]
+    q = (p-np.eye(dim))
+    ones = np.ones(dim)
+    q = np.c_[q,ones]
+    qq = np.dot(q, q.T)
+    bq = np.ones(dim)
+    return np.linalg.solve(qq,bq)
+
+
+def steady_state(
+    p=np.matrix([
+              [0,.2,.4,.4],
+              [.2,0,.4,.4],
+              [.2,.3,0,.5],
+              [.3,.4,.3,0]
+              ]),
+    t=np.matrix([
+          [1,2,3,1],
+          [5,1,7,1],
+          [1,1,1,1],
+          [1,1,1,1]
+          ])):
+    '''
+    IMPORTANT: p and t must be matrices and not 2d arrays.
+    '''
+    # How much average time does the system spend 
+    # in each state once it gets to said state?
+    p_times_t = np.array(np.sum(np.multiply(p,t),axis=1).T)[0]
+    # Steady state probabilities based on p.
+    pis = steady_state_props(p)
+    # Need to weigh the steady state probs
+    # based on p and re-normalize.
+    nu_pis = (pis*p_times_t)/sum(pis*p_times_t)
+    return nu_pis
 
 
 if __name__ == "__main__":
