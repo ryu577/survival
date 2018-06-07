@@ -60,22 +60,56 @@ Going back the the waiting for a bus example, we can model the process as a stat
 
 <a href="https://ryu577.github.io/jekyll/update/2018/05/22/optimum_waiting_thresholds.html" 
 target="_blank"><img src="https://github.com/ryu577/ryu577.github.io/blob/master/Downloads/opt_thresholds/bus_states.png" 
-alt="Image formed by above method" width="240" height="180" border="10" /></a>
+alt="Image formed by above method" width="480" height="500" border="10" /></a>
 
 Also, which state we go to next and how much time it takes to jump to that state depends only on which state we are currently in. This property is called the Markov property. To represent the transitions, we need two matrices. One for transition probabilities and another for transition times. Continuing from above, we can run the following code:
 
+
 ```python
+intervention_cost=200;
 >>>(p,t) = ll1.construct_matrices(tau, intervention_cost)
 >>>p
 matrix([[ 0.        ,  0.00652163,  0.99347837],
         [ 0.        ,  0.        ,  1.        ],
         [ 0.1       ,  0.9       ,  0.        ]])
+```
+
+The 'p' matrix you see above is the matrix of transition probabilities. The (i,j) row is the probability of transitioning to state 'j' given you started in state 'i'. Note that the rows of this matrix sum to 1 since we have to make a transition to one of the other available states. Also, the diagonals of the matrix are 0 since the (i,i) entry would imply transitioning from state i to i, which doesn't make sense in the context of a transition. 
+
+Given this transition matrix, let's say we start in any state i and make a transition to another state according to the probabilities given by row 'i' in the matrix. If we end up in state 'j', we spend one unit of time there and then make another random transition according to the probabilities in row 'j' and so on, repeating this process many times. What percentage of the total time would we then expect to spend in each of the states? This is called the vector of steady state probabilities and it can be calculated via the method described in the answer <a href="https://math.stackexchange.com/a/2452452/155881">here</a>.
+
+
+Now let's look at the other matrix we got. This is the matrix of transition times. The (i,j) entry represents that given we make a transition from state 'i' to state 'j', how long will it take on an average to make that transition. Again, the diagonals are zero since it doesn't make sense to transition from a state to itself. However, there is no constraint on the rows unlike the 'p' matrix.
+
+```python
 >>>t
 matrix([[   0.        ,    5.        ,    0.27409621],
         [   0.        ,    0.        ,   20.        ],
         [ 100.        ,  100.        ,    0.        ]])
 ```
 
+Now, instead of spending one unit of time in each state, what if we spend time amounting to the entry of (i,j) in the 't' matrix before making a transition to state 'j'? In the context of this process, what percentage of time do we expect to spend in each state? This is described <a href="https://math.stackexchange.com/a/2452464/155881">here</a>.
+
+Notice how the code that generated the transition matrices is a function of the threshod, 'tau' and the intervention cost ('intervention_cost'). Now, we obviously want the 'tau' that gives us the most percentage of time spent in the state 'working'.
+
+We can simply test many values of the threshold and pick the one that gives us the highest proportion of time spent in the 'working' state.
+
+```python
+>>>costs = []
+>>>probs = []
+>>>for tau in np.arange(10,900,1):
+>>>	(p,t) = l.construct_matrices(tau, intervention_cost)
+>>>	probs.append(steady_state(p, t)[2])
+>>> opt_tau_1 = np.arange(10,900,1)[np.argmin(probs)]
+```
+
+Then, we can also calculate the optimal threshold based on the parametric distribution.
+
+```python
+opt_tau_2 = ll1.optimal_wait_threshold(intervention_cost)
+```
+
+And we can see that the two are very close to each other.
 
 Note: most of the distributions covered in this library are also available in scipy.stats. So, why write a new library? 
 
