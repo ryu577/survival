@@ -24,19 +24,19 @@ This library contains methods that can help:
 To install the library, run:
 
 ```
-   pip install survival
+pip install survival
 ```
 
 Make sure you have all the requirements (requirements.txt) installed. If not, you can run:
 
 ```
-	pip install -r requirements.txt
+pip install -r requirements.txt
 ```
 
 Alternately, you can fork/download the code and run from the main folder:
 
 ```
-	python setup.py install
+python setup.py install
 ```
 
 In this case, you'll need to have a PYTHONPATH variable on your system, with the root folder of this project included in it.
@@ -90,13 +90,23 @@ Going back the the waiting for a bus example, we can model the process as a stat
 target="_blank"><img src="https://github.com/ryu577/ryu577.github.io/blob/master/Downloads/opt_thresholds/bus_states.png" 
 alt="Image formed by above method" width="480" height="400" border="10" /></a>
 
-Also, we assume that which state we go to next and how much time it takes to jump to that state depends only on which state we are currently in. This property is called the Markov property. To describe the transitions, we need two matrices. One for transition probabilities and another for transition times. Continuing from above, we can run the following code:
+Also, we assume that which state we go to next and how much time it takes to jump to that state depends only on which state we are currently in. This property is called the Markov property. 
+
+
+To describe the transitions, we need two matrices. One for transition probabilities and another for transition times. The matrices represent some properties of the transition from state 'i' to state 'j' (exactly what will become clear soon). Again, the first state (i=0) is "waiting", the second state (i=1) is "walking" and the last and most desirable state where we want to spend the highest proportion of time is "working".
+
+
+Continuing from above, we can run the following code:
 
 
 ```python
-# The time it takes to walk to work.
-intervention_cost=200;
+# The time it takes to walk to work and the amount of 
+# time we wait for the bus before walking respectively.
+intervention_cost=200; tau=275
 
+# The transition probabilities and transition times depend on 
+# the amount of time we're willing to wait for the bus, tau
+# and the amount of time it takes to walk to work, intervention_cost.
 >>>(p,t) = ll1.construct_matrices(tau, intervention_cost)
 >>>p
 matrix([[ 0.        ,  0.00652163,  0.99347837],
