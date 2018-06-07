@@ -2,6 +2,7 @@
 
 All kinds of survival analysis distributions and methods to optimize how long to wait for them.
 
+## 1. Problem description
 
 Say it takes ten minutes for you to walk to work. However, there is a bus that also takes you right from your house to work. As an added bonus, the bus has internet, so you can start working while on it. The catch is that you don’t know how long it will take for the bus to arrive.
 
@@ -13,35 +14,62 @@ There is a whole family of problems that can be expressed in this framework. Bas
 
 This library contains methods that can help:
 
-1) Fit the distributions of the arrival times given samples from it.
+1) Fit the distributions of the arrival times (for the bus or whatever process you're waiting for) given samples from it.
 2) Handles censored data points. This basically means that sometimes, you only know the bus took more than (say) 10 minutes since you gave up waiting for it.
 3) Find the optimal waiting thresholds using various strategies, parametric and non-parametric.
 4) Optimizing multiple thresholds within a complex state machine to maximize steady state time spent in desirable states.
 
+
+## 2. Installation
 To install the library, run:
 
 ```
    pip install survival
 ```
 
+Make sure you have all the requirements (requirements.txt) installed. If not, you can run:
+
+'''
+	pip install -r requirements.txt
+'''
+
+Alternately, you can fork/download the code and run from the main folder:
+
+'''
+	python setup.py install
+'''
+
+In this case, you'll need to have a PYTHONPATH variable on your system, with the root folder of this project included in it.
+
+## 3. Use case for optimizing waiting threshold
+
+In this section, we try and answer the question posed in section 1 - how long should we wait for the bus before giving up on it and starting to walk?
+
+First, we'll need to observe some data on the historic arrival times of the bus and fit a distribution to them. Note however that some of our data will be incomplete since when we give up on the bus after x minutes, we only know it took more than that time for it to arrive, but not exactly how much. These are called censored observations.
+
 Here is some sample code to fit a distribution when we have some complete observations (in array, ti) and some censored observations (in array xi).
 
 
 ```python
+# If you don't have it already, you can install matplotlib via - 
+# pip install matplotlib
 >>>import matplotlib.pyplot as plt
 >>>from distributions.lomax import *
 >>>from distributions.loglogistic import *
+# Some starting parameters.
 >>>k=10.0; lmb=0.5; sample_size=5000; censor_level=2.0; prob=1.0
-# Initialize a Lomax distribution
+# For now, we just assume the arrival times of the bus follow a Lomax distribution.
 >>>l = Lomax(k=k, lmb=lmb)
 # Generate some samples from said Lomax distribution.
 >>>samples = l.samples(size=sample_size)
-# Since we never wait for the bus more than 10 minutes, the observed samples are the ones that take less than 10 minutes.
+# Since we never wait for the bus more than x minutes, the observed samples are the ones that take less than x minutes.
 >>>ti = samples[(samples<=censor_level)]
-# For the samples that took more than 10 minutes, add them to the censored array and all we know is they took more than 10 minutes but 
+# For the samples that took more than 10 minutes, add them to the censored array and all we know is they took more than x minutes but 
 # not exactly how long.
 >>>xi = np.ones(sum(samples>censor_level))*censor_level
-# Fit a log logistic model to the data we just generated. Ignore the warnings.
+# Fit a log logistic model to the data we just generated (since we won't know the actual distribution in the real world, 
+# we are fitting a distribution other than the one that generated the data). 
+# Ignore the warnings.
 >>>ll1 = LogLogistic(ti=ti, xi=xi)
 # See how well the distribution fits the histogram.
 >>>histo = plt.hist(samples, normed=True)
@@ -50,23 +78,25 @@ Here is some sample code to fit a distribution when we have some complete observ
 >>>plt.show()
 ```
 
-
 <a href="https://ryu577.github.io/jekyll/update/2018/05/22/optimum_waiting_thresholds.html" 
 target="_blank"><img src="https://github.com/ryu577/ryu577.github.io/blob/master/Downloads/opt_thresholds/loglogistic_on_lomax.png" 
 alt="Image formed by above method" width="240" height="180" border="10" /></a>
 
+## 4. Optimizing waiting threshold using the distribution
 
-Going back the the waiting for a bus example, we can model the process as a state machine. There are three possible states that we care about - waiting, walking and working. The figure below represents the states and the arrows show the possible transitions between the states.
+Going back the the waiting for a bus example, we can model the process as a state machine. There are three possible states that we care about - "waiting", "walking" and "working". The figure below represents the states and the arrows show the possible transitions between the states.
 
 <a href="https://ryu577.github.io/jekyll/update/2018/05/22/optimum_waiting_thresholds.html" 
 target="_blank"><img src="https://github.com/ryu577/ryu577.github.io/blob/master/Downloads/opt_thresholds/bus_states.png" 
-alt="Image formed by above method" width="480" height="500" border="10" /></a>
+alt="Image formed by above method" width="480" height="400" border="10" /></a>
 
-Also, which state we go to next and how much time it takes to jump to that state depends only on which state we are currently in. This property is called the Markov property. To represent the transitions, we need two matrices. One for transition probabilities and another for transition times. Continuing from above, we can run the following code:
+Also, we assume that which state we go to next and how much time it takes to jump to that state depends only on which state we are currently in. This property is called the Markov property. To describe the transitions, we need two matrices. One for transition probabilities and another for transition times. Continuing from above, we can run the following code:
 
 
 ```python
+# The time it takes to walk to work.
 intervention_cost=200;
+
 >>>(p,t) = ll1.construct_matrices(tau, intervention_cost)
 >>>p
 matrix([[ 0.        ,  0.00652163,  0.99347837],
@@ -95,21 +125,23 @@ Notice how the code that generated the transition matrices is a function of the 
 We can simply test many values of the threshold and pick the one that gives us the highest proportion of time spent in the 'working' state.
 
 ```python
->>>costs = []
 >>>probs = []
 >>>for tau in np.arange(10,900,1):
->>>	(p,t) = l.construct_matrices(tau, intervention_cost)
->>>	probs.append(steady_state(p, t)[2])
->>> opt_tau_1 = np.arange(10,900,1)[np.argmin(probs)]
+>>>	 (p,t) = ll1.construct_matrices(tau, intervention_cost)
+>>>	 probs.append(steady_state(p, t)[2])
+>>>opt_tau_1 = np.arange(10,900,1)[np.argmax(probs)]
 ```
 
-Then, we can also calculate the optimal threshold based on the parametric distribution.
+Then, we can also calculate the optimal threshold <a href="https://github.com/ryu577/survival/blob/3d5ad7102f1a596adea1fa3cb30c3138f76ca1fd/distributions/basemodel.py#L73">based on the parametric distribution</a>.
+
 
 ```python
 opt_tau_2 = ll1.optimal_wait_threshold(intervention_cost)
 ```
 
 And we can see that the two are very close to each other.
+
+## 5. Why this library
 
 Note: most of the distributions covered in this library are also available in scipy.stats. So, why write a new library? 
 
