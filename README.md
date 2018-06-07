@@ -29,15 +29,15 @@ To install the library, run:
 
 Make sure you have all the requirements (requirements.txt) installed. If not, you can run:
 
-'''
+```
 	pip install -r requirements.txt
-'''
+```
 
 Alternately, you can fork/download the code and run from the main folder:
 
-'''
+```
 	python setup.py install
-'''
+```
 
 In this case, you'll need to have a PYTHONPATH variable on your system, with the root folder of this project included in it.
 
