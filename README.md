@@ -41,7 +41,7 @@ python setup.py install
 
 In this case, you'll need to have a PYTHONPATH variable on your system, with the root folder of this project included in it.
 
-## 3. Use case for optimizing waiting threshold
+## 3. Fitting a distribution to waiting times
 
 In this section, we try and answer the question posed in section 1 - how long should we wait for the bus before giving up on it and starting to walk?
 
