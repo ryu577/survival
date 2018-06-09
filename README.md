@@ -142,7 +142,7 @@ We can simply test many values of the threshold and pick the one that gives us t
 >>>opt_tau_1 = np.arange(10,900,1)[np.argmax(probs)]
 ```
 
-Then, we can also calculate the optimal threshold <a href="https://github.com/ryu577/survival/blob/3d5ad7102f1a596adea1fa3cb30c3138f76ca1fd/distributions/basemodel.py#L73">based on the parametric distribution</a>.
+Then, we can also calculate the optimal threshold <a href="https://github.com/ryu577/survival/blob/443e23d761656fad0069a3e0572d08f0706e8618/distributions/basemodel.py#L101">based on the parametric distribution</a>.
 
 
 ```python
