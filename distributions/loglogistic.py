@@ -11,14 +11,23 @@ class LogLogistic(Base):
     the instance of this distribution will have alpha=k always
     and beta=lmb always.
     '''
-    def __init__(self, alp=1, beta=0.5, ti = None, xi = None, params=np.array([500,5]), gamma=0, params0=np.array([167.0, 0.3]), verbose=False):
+    def __init__(self, alp=1, beta=0.5, ti = None, xi = None, params=np.array([1.1,1.1]), w_org=None, w_inorg=None, verbose=False):
         '''
         Initializes an instance of the log logistic distribution.
         '''
         if ti is not None:
             self.train_org = ti
             self.train_inorg = xi
-            self.gradient_descent(params = params, gamma=gamma, params0=params0, verbose=verbose)
+            ## These weights need to be manually set to something different if desired. For example, per feature.
+            if w_org is None:
+                self.w_org = np.ones(len(ti))
+            else:
+                self.w_org = w_org
+            if w_inorg is None:
+                self.w_inorg = np.ones(len(xi))
+            else:
+                self.w_inorg = w_inorg
+            self.gradient_descent(params = params, verbose=verbose)
         else:
             self.train = []
             self.test = []
@@ -29,6 +38,16 @@ class LogLogistic(Base):
             self.params = []
 
     def set_params(self, alpha, beta, params=None):
+        '''
+        Sets the parameters. Need a saperate method
+        for this distribution since it has alpha
+        and k that mean the same thing and beta and 
+        lmb that mean the same thing.
+        args:
+            alpha: The shape parameter.
+            beta: The scale parameter.
+            params: An array of shape and scale parameters.
+        '''
         if params is not None:
             [alpha, beta] = params[:2]
         self.k = self.beta = beta
@@ -129,7 +148,10 @@ class LogLogistic(Base):
             beta: The scale parameter.
         '''
         [beta, alpha] = self.determine_params(beta, alpha, None)
-        return sum(self.logpdf(t,alpha,beta)) + sum(self.logsurvival(x,alpha,beta))
+        if len(self.w_org) == len(t) and len(self.w_inorg) == len(x):
+            return sum(self.w_org*self.logpdf(t,alpha,beta)) + sum(self.w_inorg*self.logsurvival(x,alpha,beta))
+        else:
+            return sum(self.logpdf(t,alpha,beta)) + sum(self.logsurvival(x,alpha,beta))
 
     def grad(self,t,x,alp=None,beta=None):
         '''
@@ -140,10 +162,20 @@ class LogLogistic(Base):
             k: The shape parameter.
             lmb: The scale parameter.
         '''
-        n = len(t)
-        m = len(x)
-        delalp = -n*beta/alp +2*beta/alp**(beta+1) * sum(t**beta/(1+(t/alp)**beta)) + beta/alp**(beta+1)*sum(x**beta/(1+(x/alp)**beta))
-        delbeta = n/beta -n*np.log(alp) + sum(np.log(t)) -2*sum((t/alp)**beta/(1+(t/alp)**beta)*np.log(t/alp) ) - sum((x/alp)**beta/(1+(x/alp)**beta)*np.log(x/alp))
+        if len(self.w_org) == len(t) and len(self.w_inorg) == len(x):
+            n = np.sum(self.w_org)
+            m = np.sum(self.w_inorg)        
+            delalp = -n*beta/alp +2*beta/alp**(beta+1) * sum(t**beta/(1+(t/alp)**beta)*self.w_org) \
+                     + beta/alp**(beta+1)*sum(x**beta/(1+(x/alp)**beta)*self.w_inorg)
+            delbeta = n/beta -n*np.log(alp) + sum(np.log(t)*self.w_org) -2*sum((t/alp)**beta/(1+(t/alp)**beta)*np.log(t/alp)*self.w_org) \
+                      - sum((x/alp)**beta/(1+(x/alp)**beta)*np.log(x/alp)*self.w_inorg)
+        else:
+            n = len(t)
+            m = len(x)
+            delalp = -n*beta/alp +2*beta/alp**(beta+1) * sum(t**beta/(1+(t/alp)**beta)) \
+                    + beta/alp**(beta+1)*sum(x**beta/(1+(x/alp)**beta))
+            delbeta = n/beta -n*np.log(alp) + sum(np.log(t)) -2*sum((t/alp)**beta/(1+(t/alp)**beta)*np.log(t/alp) ) \
+                        - sum((x/alp)**beta/(1+(x/alp)**beta)*np.log(x/alp))
         return np.array([delalp,delbeta])
 
     def hessian(self,t,x,k=0.5,lmb=0.3):

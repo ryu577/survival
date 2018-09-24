@@ -1,3 +1,4 @@
+import numpy as np
 import matplotlib.pyplot as plt
 from distributions.weibull import *
 from distributions.lomax import *
@@ -11,27 +12,19 @@ import os
 
 # k=1.1; lmb=0.5; intervention_cost=200; sample_size=5000; censor_level=200; prob=1.0
 ## 2.1 Comparison of non-parametric approaches when we know the distribution.
-def comparisons(k=1.1, lmb=0.5, intervention_cost=200, sample_size=5000, censor_level=400, prob=1.0):
+def comparisons(k=1.1, lmb=0.5, intervention_cost=200, sample_size=5000, censor_level=200, prob=1.0):
 	distr_map = {'Lomax' : 1, 'Weibull' : 2, 'LogLogistic' : 3}
 	l = Lomax(k=k, lmb=lmb)
 	opt_tau = k*intervention_cost-1/lmb
 	print("Optimal threshold: " + str(opt_tau))
 	samples = l.samples(size=sample_size)
-	xi = np.array([1e-3])
-	unifs = np.random.uniform(size=sample_size)
-	if censor_level is not None:
-		ti = samples[(samples<=censor_level) + (unifs>prob)]
-		if sum(samples>censor_level) > 0:
-			xi = np.ones(sum( (samples>censor_level) * (unifs<=prob)))*censor_level
-	else:
-		ti = samples
-	if len(xi) == 0:
-		ti = samples
-		xi = np.array([1e-3])
+	ti, xi = censor_samples(samples, prob)
 	l1 = Lomax(ti=ti, xi=xi) # for now, we have to add a dummy xi. Should be inconsequential.
 	print("Original lomax kappa was:" + str(k) + "\nand for this one, " + str(l1.k) + "\nOriginal lambda was:" + str(lmb) + "\nand this one:" + str(l1.lmb))
 	w1 = Weibull(ti=ti, xi=xi)
+	weib_lik = w1.loglik(ti,xi,w1.k,w1.lmb)
 	ll1 = LogLogistic(ti=ti, xi=xi)
+	ll_lik = ll1.loglik(ti,xi,ll1.alpha,ll1.beta)
 	opt_tau_l = l1.optimal_wait_threshold(intervention_cost)
 	opt_tau_w = w1.optimal_wait_threshold(intervention_cost)
 	opt_tau_ll = ll1.optimal_wait_threshold(intervention_cost)
@@ -42,7 +35,7 @@ def comparisons(k=1.1, lmb=0.5, intervention_cost=200, sample_size=5000, censor_
 	distr = ll1
 	name = l1.__class__.__name__
 	for tau in np.arange(10,900,1):
-		# since there is no censoring, the data shouldn't matter.
+		# since there is no censoring, the distribution shouldn't matter.
 		(p,t) = constr_matrices_data_distr(tau, ti=ti, xi=xi, intervention_cost=intervention_cost, distr=distr)
 		costs.append(time_to_absorbing(p,t,2)[0])
 		#costs1.append(relative_nonparametric(samples, tau, intervention_cost))
@@ -51,18 +44,48 @@ def comparisons(k=1.1, lmb=0.5, intervention_cost=200, sample_size=5000, censor_
 	#opt_tau_2 = relative_nonparametric(samples, 600.0, intervention_cost)
 	opt_tau_2 = 0
 	#print("Optimal threshold based on relative-savings based non-parametric: " + str(opt_tau_2))
+	write_data("DataGen-Lomax_Model-LogLogistic_Censor-Det170", intervention_cost, sample_size, k, lmb, opt_tau, opt_tau_ll, censor_level, costs)
+	return np.array([intervention_cost, sample_size, k, lmb, opt_tau, opt_tau_l, opt_tau_1, censor_level])
+
+
+def censor_samples(samples, prob=1.0):
+	xi = np.array([1e-3])
+	unifs = np.random.uniform(size=sample_size)
+	if censor_level is not None:
+		ti = samples[(samples<=censor_level) + (unifs>prob)]
+		if sum(samples>censor_level) > 0:
+			xi = np.ones(sum((samples>censor_level) * (unifs<=prob)))*censor_level
+	else:
+		ti = samples
+	if len(xi) == 0:
+		ti = samples
+		xi = np.array([1e-3])
+	return ti, xi
+
+
+def write_data(subfolder, intervention_cost, sample_size, k, lmb, opt_tau, opt_tau_1, censor_level, costs):
 	filetxt = datetime.now().year*1e10 + datetime.now().month*1e8 + datetime.now().day*1e6 + datetime.now().hour*1e4 + datetime.now().minute*1e2 + datetime.now().second
 	#np.savetxt('./data/censored/lomax-' + str(filetxt) + '.csv', np.array([intervention_cost, sample_size, k, lmb, opt_tau, opt_tau_l, opt_tau_1, censor_level, name]), delimiter=',', )
 	txt = str(intervention_cost)+","+str(sample_size)+"," + str(k) + "," + str(lmb) + "," + str(opt_tau) + "," \
-		+ str(opt_tau_1) + "," + str(censor_level)+"," + str(distr_map[name])+","+str(prob)+"\n"
-	f = open('./data/censored/lomax-' + str(filetxt) + '.csv', 'w')
+		+ str(opt_tau_1) + "," + str(censor_level) + "\n"
+	f = open('./data/' + subfolder + '/lomax-' + str(filetxt) + '.csv', 'w')
 	f.write(txt)
 	f.close()
 	plt.plot(np.arange(10,900,1), costs)
 	plt.savefig('./plots/' + str(filetxt) + '.png', bbox_inches='tight')
 	plt.close()
-	return np.array([intervention_cost, sample_size, k, lmb, opt_tau, opt_tau_l, opt_tau_1, censor_level])
 
+
+def plot_haz_rates(l, l1, w1, ll1):
+	t = np.arange(0.1,900,0.1)
+	origs = l.hazard(t)
+	lomaxs = l1.hazard(t)
+	weibus = w1.hazard(t,w1.k,w1.lmb)
+	loglgs = ll1.hazard(t)
+	plt.plot(t, origs, color='g')
+	plt.plot(t, lomaxs, color='r')
+	plt.plot(t, weibus, color='b')
+	plt.plot(t, loglgs, color='orange')
 
 def non_parametric_comparison():
 	num_samples = []
