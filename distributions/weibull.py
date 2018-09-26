@@ -126,7 +126,7 @@ class Weibull(Base):
         with np.errstate(all='ignore'):
             return -(t/lmb)**k
 
-    def hazard(self,x,k,lmb):
+    def hazard(self,x,k=None,lmb=None, params=None):
         '''
         The hazard rate of the Weibull (probability of seeing
         a sample in next time unit conditional on not having

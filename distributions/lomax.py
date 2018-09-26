@@ -67,7 +67,7 @@ class Lomax(Base):
         [k,lmb] = self.determine_params(k,lmb,params)
         return (1+lmb*t)**-k
 
-    def logpdf(self,t,k,lmb):
+    def logpdf(self,t,k=None,lmb=None,params=None):
         '''
         The logarithm of the PDF function. Handy for calculating log likelihood.
         args:
@@ -75,9 +75,10 @@ class Lomax(Base):
             l: The shape parameter.
             lmb: The scale parameter.
         '''
+        [k,lmb] = self.determine_params(k,lmb,params)
         return np.log(k) + np.log(lmb) - (k+1)*np.log(1+lmb*t)
 
-    def logsurvival(self,t,k,lmb):
+    def logsurvival(self,t,k=None,lmb=None,params=None):
         '''
         The logarithm of the survival function. Handy for calculating log likelihood.
         args:
@@ -85,9 +86,10 @@ class Lomax(Base):
             l: The shape parameter.
             lmb: The scale parameter.
         '''
+        [k,lmb] = self.determine_params(k,lmb,params)
         return -k*np.log(1+lmb*t)
 
-    def loglik(self,t,x,k=0.5,lmb=0.3):
+    def loglik(self,t,x,k=None,lmb=None,params=None):
         '''
         The logarithm of the likelihood function.
         args:
@@ -96,6 +98,7 @@ class Lomax(Base):
             l: The shape parameter.
             lmb: The scale parameter.
         '''
+        [k,lmb] = self.determine_params(k,lmb,params)
         return sum(self.logpdf(t,k,lmb)) +sum(self.logsurvival(x,k,lmb))
 
     def grad(self,t,x,k=0.5,lmb=0.3):

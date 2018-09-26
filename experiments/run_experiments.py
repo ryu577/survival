@@ -11,6 +11,7 @@ from numpy import genfromtxt
 import os
 
 
+#k=1.1; lmb=0.5; intervention_cost=200; q=1.0
 def optimal_time_same_for_steadystate_and_timetoabsorbing(k=1.1, lmb=0.5, intervention_cost=200, q=1.0):
     """
     Demonstrates that the threshold that optimizes time required to 
@@ -23,21 +24,44 @@ def optimal_time_same_for_steadystate_and_timetoabsorbing(k=1.1, lmb=0.5, interv
     opt_tau = k*intervention_cost/q-1/lmb
     print("Optimal threshold: " + str(opt_tau))
     costs = []
-    probs = []
+    props = []
     for tau in np.arange(10,900,1):
         (p,t) = l.construct_matrices(tau, intervention_cost)
+        p1, t1 = expand_matrices(p,t,q)
         ## Verified that as long as  the row corresponding to the Ready state
         ## sums to 1, the optimal threshold doesn't change.
-        prob_rdy_to_powon = (1-q)*l.survival(tau)
-        p[2,] = np.matrix([1-prob_rdy_to_powon, prob_rdy_to_powon, 0])
-        t[2,] = np.matrix([2.0, tau, 0])
         costs.append(time_to_absorbing(p,t,2)[0])
-        probs.append(steady_state(p, t)[2])
+        steady = steady_state(p1, t1)
+        props.append(steady[0]+steady[3])
+        #props.append(steady_state(p, t)[2])
     print("Optimal thresholds based on time to absorbing state.")
     print(np.arange(10,900,1)[np.argmin(costs)])
     print("Optimal thresholds based on steady state proportions.")
-    print(np.arange(10,900,1)[np.argmax(probs)])
-    plot_side_by_side(probs, costs, np.arange(10,900,1))
+    print(np.arange(10,900,1)[np.argmax(props)])
+    plot_side_by_side(props, costs, np.arange(10,900,1))
+
+
+def expand_matrices(p, t, q=1.0):
+    p1 = np.zeros((4,4))
+    t1 = np.zeros((4,4))
+    p1[0,2] = p[0,1]
+    p1[0,3] = p[0,2]
+    t1[0,2] = t[0,1]
+    t1[0,3] = t[0,2]
+    
+    p1[1,2] = p[0,1]
+    p1[1,3] = p[0,2]
+    t1[1,2] = t[0,1]
+    t1[1,3] = t[0,2]
+
+    p1[2,3] = 1.0
+    t1[2,3] = t[1,2]
+    
+    p1[3,0] = (1-q)
+    p1[3,1] = q
+    t1[3,0] = 10000.0
+    t1[3,1] = 10000.0 #Any arbitrary number.
+    return np.matrix(p1), np.matrix(t1)
 
 
 def plot_side_by_side(ser1, ser2, t=np.arange(10,900,1)):
