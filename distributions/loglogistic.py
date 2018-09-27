@@ -190,7 +190,9 @@ class LogLogistic(Base):
         '''
         return self.numerical_hessian(t,x,k,lmb)
 
-    
+
+def ll_haz_rate(t, alpha, beta):
+    return (beta/alpha)*(t/alpha)**(beta-1)/(1+(t/alpha)**beta)
 
 ## These are old methods. Ignore them.
 def fixedAlp(beta):
@@ -200,6 +202,7 @@ def fixedAlp(beta):
 def fixedBeta(alp):
     beta = 1.35
     return ll.grad(ll.train_org,ll.train_inorg,alp,beta)[0]
+
 
 
 
