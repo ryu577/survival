@@ -107,7 +107,9 @@ def relative_nonparametric(recovery_times, current_censor = 600.0, intervention_
         netSavings = (savings - losses)
         relSavings.append(netSavings)
         if indx%20 == 0 and verbose:
-            print("tau: " + "{0:.2f}".format(tau) + " savings: " + "{0:.2f}".format(savings) + " losses: " + "{0:.2f}".format(losses) + " net: " + "{0:.2f}".format(netSavings))
+            print("tau: " + "{0:.2f}".format(tau) + " savings: " +\
+             "{0:.2f}".format(savings) + " losses: " + "{0:.2f}".format(losses)\
+              + " net: " + "{0:.2f}".format(netSavings))
     return taus[np.argmax(relSavings)]
 
 

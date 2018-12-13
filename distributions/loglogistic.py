@@ -5,20 +5,24 @@ from distributions.basemodel import *
 
 class LogLogistic(Base):
     '''
-    The log logistic distribution: https://en.wikipedia.org/wiki/Log-logistic_distribution
+    The log logistic distribution: 
+    https://en.wikipedia.org/wiki/Log-logistic_distribution
     Since we have alpha as the shape parameter and beta as the scale parameter
     in the link above while k for shape and lmb for scale more generally,
     the instance of this distribution will have alpha=k always
     and beta=lmb always.
     '''
-    def __init__(self, alp=1, beta=0.5, ti = None, xi = None, params=np.array([1.1,1.1]), w_org=None, w_inorg=None, verbose=False):
+    def __init__(self, alp=1, beta=0.5, ti = None, xi = None, \
+                params=np.array([1.1,1.1]), \
+                w_org=None, w_inorg=None, verbose=False):
         '''
         Initializes an instance of the log logistic distribution.
         '''
         if ti is not None:
             self.train_org = ti
             self.train_inorg = xi
-            ## These weights need to be manually set to something different if desired. For example, per feature.
+            ## These weights need to be manually set to something 
+            # different if desired. For example, per feature.
             if w_org is None:
                 self.w_org = np.ones(len(ti))
             else:
@@ -33,7 +37,7 @@ class LogLogistic(Base):
             self.test = []
             self.train_org = []
             self.train_inorg = []
-            self.alpha = self.lmb = alpha
+            self.alpha = self.lmb = alp
             self.beta = self.k = beta
             self.params = []
 
@@ -113,11 +117,14 @@ class LogLogistic(Base):
             beta: The scale parameter.            
         '''
         [beta, alpha] = self.determine_params(beta, alpha, None)
-        return np.log(beta)-np.log(alpha) +(beta-1)*(np.log(x) - np.log(alpha)) - 2*np.log(1+(x/alpha)**beta)
+        return np.log(beta)-np.log(alpha) +\
+        (beta-1)*(np.log(x) - np.log(alpha)) \
+        - 2*np.log(1+(x/alpha)**beta)
 
     def survival(self,x,alpha=None,beta=None):
         '''
-        The survival function of the distribution (probability that it is greater than x).
+        The survival function of the distribution 
+        (probability that it is greater than x).
         args:
             x: Evaluated here.
             alpha: Shape parameter.
@@ -128,8 +135,10 @@ class LogLogistic(Base):
 
     def logsurvival(self,x,alpha,beta):
         '''
-        The logarithm of the survival function of the distribution (probability that it is greater than x).
-        For now, we simply take the log, but we can possibly improve the efficiency numerically in the future.
+        The logarithm of the survival function of the 
+        distribution (probability that it is greater than x).
+        For now, we simply take the log, but we can possibly 
+        improve the efficiency numerically in the future.
         args:
             x: Evaluated here.
             alpha: Shape parameter.
@@ -149,9 +158,11 @@ class LogLogistic(Base):
         '''
         [beta, alpha] = self.determine_params(beta, alpha, None)
         if len(self.w_org) == len(t) and len(self.w_inorg) == len(x):
-            return sum(self.w_org*self.logpdf(t,alpha,beta)) + sum(self.w_inorg*self.logsurvival(x,alpha,beta))
+            return sum(self.w_org*self.logpdf(t,alpha,beta)) + \
+            sum(self.w_inorg*self.logsurvival(x,alpha,beta))
         else:
-            return sum(self.logpdf(t,alpha,beta)) + sum(self.logsurvival(x,alpha,beta))
+            return sum(self.logpdf(t,alpha,beta)) +\
+             sum(self.logsurvival(x,alpha,beta))
 
     def grad(self,t,x,alp=None,beta=None):
         '''
@@ -159,23 +170,31 @@ class LogLogistic(Base):
         args:
             t: The array of observed survival times.
             x: The array of censored survival times.
-            k: The shape parameter.
-            lmb: The scale parameter.
+            alp: The scale parameter.
+            beta: The shape parameter.
         '''
+        if alp is None:
+            alp = self.alpha
+        if beta is None:
+            beta = self.beta
         if len(self.w_org) == len(t) and len(self.w_inorg) == len(x):
             n = np.sum(self.w_org)
             m = np.sum(self.w_inorg)        
-            delalp = -n*beta/alp +2*beta/alp**(beta+1) * sum(t**beta/(1+(t/alp)**beta)*self.w_org) \
-                     + beta/alp**(beta+1)*sum(x**beta/(1+(x/alp)**beta)*self.w_inorg)
-            delbeta = n/beta -n*np.log(alp) + sum(np.log(t)*self.w_org) -2*sum((t/alp)**beta/(1+(t/alp)**beta)*np.log(t/alp)*self.w_org) \
-                      - sum((x/alp)**beta/(1+(x/alp)**beta)*np.log(x/alp)*self.w_inorg)
+            delalp = -n*beta/alp +2*beta/alp**(beta+1) *\
+                    sum(t**beta/(1+(t/alp)**beta)*self.w_org) \
+                    + beta/alp**(beta+1)*sum(x**beta/(1+(x/alp)**beta)*self.w_inorg)
+            delbeta = n/beta -n*np.log(alp) + sum(np.log(t)*self.w_org)\
+             -2*sum((t/alp)**beta/(1+(t/alp)**beta)\
+             *np.log(t/alp)*self.w_org) \
+            - sum((x/alp)**beta/(1+(x/alp)**beta)*np.log(x/alp)*self.w_inorg)
         else:
             n = len(t)
             m = len(x)
             delalp = -n*beta/alp +2*beta/alp**(beta+1) * sum(t**beta/(1+(t/alp)**beta)) \
                     + beta/alp**(beta+1)*sum(x**beta/(1+(x/alp)**beta))
-            delbeta = n/beta -n*np.log(alp) + sum(np.log(t)) -2*sum((t/alp)**beta/(1+(t/alp)**beta)*np.log(t/alp) ) \
-                        - sum((x/alp)**beta/(1+(x/alp)**beta)*np.log(x/alp))
+            delbeta = n/beta -n*np.log(alp) + \
+            sum(np.log(t)) -2*sum((t/alp)**beta/(1+(t/alp)**beta)*np.log(t/alp) ) \
+            - sum((x/alp)**beta/(1+(x/alp)**beta)*np.log(x/alp))
         return np.array([delalp,delbeta])
 
     def hessian(self,t,x,k=0.5,lmb=0.3):
@@ -193,17 +212,6 @@ class LogLogistic(Base):
 
 def ll_haz_rate(alpha, beta, t):
     return (beta/alpha)*(t/alpha)**(beta-1)/(1+(t/alpha)**beta)
-
-
-## These are old methods. Ignore them.
-def fixedAlp(beta):
-    alp = 79.82
-    return ll.grad(ll.train_org,ll.train_inorg,alp,beta)[1]
-
-
-def fixedBeta(alp):
-    beta = 1.35
-    return ll.grad(ll.train_org,ll.train_inorg,alp,beta)[0]
 
 
 

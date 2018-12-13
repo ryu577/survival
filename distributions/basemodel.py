@@ -126,6 +126,7 @@ class Base(object):
         self.lmb = lmb
         self.params = [k, lmb]
 
+
     def numerical_hessian(self,t,x,k=0.5,lmb=0.3):
         '''
         Numerically evaluates the hessian matrix (https://en.wikipedia.org/wiki/Hessian_matrix)
@@ -147,6 +148,7 @@ class Base(object):
         hess[1,0] = dellmbk
         return hess
 
+
     def numerical_grad(self,t,x,alp,beta):
         '''
         Numerically evaluates the gradient (vector of partial derivatives w.r.t. each parameter.)
@@ -160,6 +162,7 @@ class Base(object):
         delalp = (self.loglik(t,x,alp+eps,beta) - self.loglik(t,x,alp-eps,beta))/2/eps
         delbeta = (self.loglik(t,x,alp,beta+eps) - self.loglik(t,x,alp,beta-eps))/2/eps
         return np.array([delalp,delbeta])
+
 
     def gradient_descent(self, numIter=2001, params = np.array([2.0,2.0]), verbose=False,
         step_lengths=[1e-8,1e-7,1e-5,1e-3,1e-2,.1, 10, 50, 70, 120, 150, 200, 250, 270, 300, 500, 1e3, 1.5e3, 2e3, 3e3]):

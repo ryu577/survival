@@ -20,7 +20,10 @@ def comparisons(k=1.1, lmb=0.5, intervention_cost=200, sample_size=5000, censor_
 	samples = l.samples(size=sample_size)
 	ti, xi = censor_samples(samples, prob)
 	l1 = Lomax(ti=ti, xi=xi) # for now, we have to add a dummy xi. Should be inconsequential.
-	print("Original lomax kappa was:" + str(k) + "\nand for this one, " + str(l1.k) + "\nOriginal lambda was:" + str(lmb) + "\nand this one:" + str(l1.lmb))
+	print("Original lomax kappa was:" + str(k) +\
+		 "\nand for this one, " + str(l1.k) +\
+		  "\nOriginal lambda was:" + str(lmb) + \
+		  "\nand this one:" + str(l1.lmb))
 	w1 = Weibull(ti=ti, xi=xi)
 	weib_lik = w1.loglik(ti,xi,w1.k,w1.lmb)
 	ll1 = LogLogistic(ti=ti, xi=xi)
@@ -36,7 +39,8 @@ def comparisons(k=1.1, lmb=0.5, intervention_cost=200, sample_size=5000, censor_
 	name = l1.__class__.__name__
 	for tau in np.arange(10,900,1):
 		# since there is no censoring, the distribution shouldn't matter.
-		(p,t) = constr_matrices_data_distr(tau, ti=ti, xi=xi, intervention_cost=intervention_cost, distr=distr)
+		(p,t) = constr_matrices_data_distr(tau, ti=ti, xi=xi, \
+			intervention_cost=intervention_cost, distr=distr)
 		costs.append(time_to_absorbing(p,t,2)[0])
 		#costs1.append(relative_nonparametric(samples, tau, intervention_cost))
 	opt_tau_1 = np.arange(10,900,1)[np.argmin(costs)]
@@ -44,8 +48,11 @@ def comparisons(k=1.1, lmb=0.5, intervention_cost=200, sample_size=5000, censor_
 	#opt_tau_2 = relative_nonparametric(samples, 600.0, intervention_cost)
 	opt_tau_2 = 0
 	#print("Optimal threshold based on relative-savings based non-parametric: " + str(opt_tau_2))
-	write_data("DataGen-Lomax_Model-LogLogistic_Censor-Det170", intervention_cost, sample_size, k, lmb, opt_tau, opt_tau_ll, censor_level, costs)
-	return np.array([intervention_cost, sample_size, k, lmb, opt_tau, opt_tau_l, opt_tau_1, censor_level])
+	write_data("DataGen-Lomax_Model-LogLogistic_Censor-Det170", \
+		intervention_cost, sample_size, k, lmb, opt_tau, opt_tau_ll, \
+		censor_level, costs)
+	return np.array([intervention_cost, sample_size,\
+			 k, lmb, opt_tau, opt_tau_l, opt_tau_1, censor_level])
 
 
 def censor_samples(samples, prob=1.0):
@@ -63,11 +70,15 @@ def censor_samples(samples, prob=1.0):
 	return ti, xi
 
 
-def write_data(subfolder, intervention_cost, sample_size, k, lmb, opt_tau, opt_tau_1, censor_level, costs):
-	filetxt = datetime.now().year*1e10 + datetime.now().month*1e8 + datetime.now().day*1e6 + datetime.now().hour*1e4 + datetime.now().minute*1e2 + datetime.now().second
+def write_data(subfolder, intervention_cost, sample_size, k, lmb, opt_tau, \
+				opt_tau_1, censor_level, costs):
+	filetxt = datetime.now().year*1e10 + datetime.now().month*1e8 +\
+		 datetime.now().day*1e6 + datetime.now().hour*1e4 + \
+		 datetime.now().minute*1e2 + datetime.now().second
 	#np.savetxt('./data/censored/lomax-' + str(filetxt) + '.csv', np.array([intervention_cost, sample_size, k, lmb, opt_tau, opt_tau_l, opt_tau_1, censor_level, name]), delimiter=',', )
-	txt = str(intervention_cost)+","+str(sample_size)+"," + str(k) + "," + str(lmb) + "," + str(opt_tau) + "," \
-		+ str(opt_tau_1) + "," + str(censor_level) + "\n"
+	txt = str(intervention_cost)+","+str(sample_size)+"," + str(k) \
+			+ "," + str(lmb) + "," + str(opt_tau) + "," \
+			+ str(opt_tau_1) + "," + str(censor_level) + "\n"
 	f = open('./data/' + subfolder + '/lomax-' + str(filetxt) + '.csv', 'w')
 	f.write(txt)
 	f.close()

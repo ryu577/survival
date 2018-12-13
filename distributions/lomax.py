@@ -20,6 +20,9 @@ class Lomax(Base):
         if ti is not None:
             self.train_org = ti
             self.train_inorg = xi
+            ## Initialize k and lmb to some reasonable guess
+            self.k = 0.85
+            self.lmb = 1e-3
             self.newtonRh()
         else:
             self.train = []
