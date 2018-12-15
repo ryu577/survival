@@ -2,15 +2,15 @@
 
 All kinds of survival analysis distributions and methods to optimize how long to wait for them.
 
+Survival analysis is a branch of statistics for analyzing the expected duration of time until one or more events happen, such as death in biological organisms, failure in mechanical systems, occurrence of a disease, marriage, divorce, etc. 
+
 ## 1. Problem description
 
-Say it takes ten minutes for you to walk to work. However, there is a bus that also takes you right from your house to work. As an added bonus, the bus has internet, so you can start working while on it. The catch is that you don’t know how long it will take for the bus to arrive.
+Let's take a real world example that you (actually I) face everyday. It takes ten minutes for you to walk to work. However, there is a bus that also takes you right from your house to work. As an added bonus, the bus has internet, so you can start working while on it. The catch is that you don’t know how long it will take for the bus to arrive.
 
-Now, being the productive person you are, you want to minimize the time you spend being in a state where you can’t work (walking to work or waiting for the bus)
-over the long-run (say a year). How long should you wait for the bus each day given the distribution of its arrival times? 
+Now, being the productive person you are, you want to minimize the time you spend being in a state where you can’t work (walking to work or waiting for the bus) over the long-run (say a year). How long should you wait for the bus each day given the distribution of its arrival times? 
 
-
-There is a whole family of problems that can be expressed in this framework. Basically, any scenario where you're waiting for something. For example, most complex software components make API calls to other components. And, they probably have a plan B for when these calls fail. Now, how long should it wait for the API call to succeed before giving up on it?
+There is a whole family of problems that can be expressed in this framework. Basically, this is for any scenario *where you're waiting for something*. For example, most of complex software components make API calls to other components. And, they have a plan B for when these calls fail. Now, how long should it wait for the API call to respond before treating the call as failure?
 
 This library contains methods that can help:
 
