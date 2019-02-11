@@ -47,8 +47,7 @@ In this section, we try and answer the question posed in section 1 - how long sh
 
 First, we'll need to observe some data on the historic arrival times of the bus and fit a distribution to them. Note however that some of our data will be incomplete since when we give up on the bus after x minutes, we only know it took more than that time for it to arrive, but not exactly how much. These are called censored observations.
 
-Here is some sample code to fit a distribution when we have some complete observations (in array, ti) and some censored observations (in array xi).
-
+Here is some sample code to fit a distribution when we have some complete observations (ti) and some censored observations (xi).
 
 ```python
 # If you don't have it already, you can install matplotlib via - 
@@ -60,7 +59,7 @@ Here is some sample code to fit a distribution when we have some complete observ
 # Parameters for Lomax
 >>> k = 10.0; lmb = 0.5; sample_size = 5000; censor_level = 2.0; prob = 1.0
 
-# For now, we just assume the arrival times of the bus follow a Lomax distribution.
+# Let's assume the arrival times of the bus follow a Lomax distribution.
 >>> l = Lomax(k=k, lmb=lmb)
 
 # Generate samples from Lomax distribution.
@@ -93,9 +92,11 @@ alt="Image formed by above method" width="240" height="180" border="10" /></a>
 
 ### 3.1 What is lomax distribution?
 
+It is basically a Pareto distribution that has been shifted so that its support begins at zero. A heavy tailed distribution. For a non-negative random variable.
 
-### 3.2 What is log logistics distribution?
+### 3.2 What is log logistic distribution?
 
+The probability distribution of a random variable whose logarithm has a logistic distribution. For a non-negative random variable. It is used in survival analysis as a parametric model for events whose rate increases initially and decreases later, for example mortality rate from cancer.
 
 ## 4. Optimizing waiting threshold using the distribution
 
