@@ -2,13 +2,15 @@ import numpy as np
 from scipy.stats import lomax
 from distributions.basemodel import *
 
+
 class Lomax(Base):
     '''
     We can instantiate a Lomax distribution 
     (https://en.wikipedia.org/wiki/Lomax_distribution)
     with this class.
     '''
-    def __init__(self, k = None, lmb = None, ti = None, xi = None):
+
+    def __init__(self, k=None, lmb=None, ti=None, xi=None):
         '''
         Instantiate a Lomax distribution.
         args:
@@ -20,7 +22,7 @@ class Lomax(Base):
         if ti is not None:
             self.train_org = ti
             self.train_inorg = xi
-            ## Initialize k and lmb to some reasonable guess
+            # Initialize k and lmb to some reasonable guess
             self.k = 0.85
             self.lmb = 1e-3
             self.newtonRh()
@@ -39,7 +41,7 @@ class Lomax(Base):
         '''
         return super(Lomax, self).determine_params(k, lmb, params)
 
-    def pdf(self,t,k=None,lmb=None,params=None):
+    def pdf(self, t, k=None, lmb=None, params=None):
         '''
         The probability distribution function (PDF) of the Lomax distribution.
         args:
@@ -47,10 +49,10 @@ class Lomax(Base):
             k: The shape parameter of the Lomax distribution.
             lmb: The scale parameter of the lomax distribution.
         '''
-        [k,lmb] = self.determine_params(k,lmb,params)
-        return lmb*k/(1+lmb*t)**(k+1)
+        [k, lmb] = self.determine_params(k, lmb, params)
+        return lmb * k / (1 + lmb * t)**(k + 1)
 
-    def cdf(self,t,k=None,lmb=None,params=None):
+    def cdf(self, t, k=None, lmb=None, params=None):
         '''
         The cumulative density functino of the Lomax distribution.
         Probability that the distribution is lower than a certain value.
@@ -60,17 +62,17 @@ class Lomax(Base):
             lmb: The sclae parameter of the Lomax.
             params: A 2d array with the shape and scale parameters.
         '''
-        [k,lmb] = self.determine_params(k,lmb,params)
-        return 1-(1+lmb*t)**-k
+        [k, lmb] = self.determine_params(k, lmb, params)
+        return 1 - (1 + lmb * t)**-k
 
-    def survival(self,t,k=None,lmb=None, params = None):
+    def survival(self, t, k=None, lmb=None, params=None):
         '''
         The survival function for the Lomax distribution.
         '''
-        [k,lmb] = self.determine_params(k,lmb,params)
-        return (1+lmb*t)**-k
+        [k, lmb] = self.determine_params(k, lmb, params)
+        return (1 + lmb * t)**-k
 
-    def logpdf(self,t,k=None,lmb=None,params=None):
+    def logpdf(self, t, k=None, lmb=None, params=None):
         '''
         The logarithm of the PDF function. Handy for calculating log likelihood.
         args:
@@ -78,10 +80,10 @@ class Lomax(Base):
             l: The shape parameter.
             lmb: The scale parameter.
         '''
-        [k,lmb] = self.determine_params(k,lmb,params)
-        return np.log(k) + np.log(lmb) - (k+1)*np.log(1+lmb*t)
+        [k, lmb] = self.determine_params(k, lmb, params)
+        return np.log(k) + np.log(lmb) - (k + 1) * np.log(1 + lmb * t)
 
-    def logsurvival(self,t,k=None,lmb=None,params=None):
+    def logsurvival(self, t, k=None, lmb=None, params=None):
         '''
         The logarithm of the survival function. Handy for calculating log likelihood.
         args:
@@ -89,10 +91,10 @@ class Lomax(Base):
             l: The shape parameter.
             lmb: The scale parameter.
         '''
-        [k,lmb] = self.determine_params(k,lmb,params)
-        return -k*np.log(1+lmb*t)
+        [k, lmb] = self.determine_params(k, lmb, params)
+        return -k * np.log(1 + lmb * t)
 
-    def loglik(self,t,x,k=None,lmb=None,params=None):
+    def loglik(self, t, x, k=None, lmb=None, params=None):
         '''
         The logarithm of the likelihood function.
         args:
@@ -101,10 +103,10 @@ class Lomax(Base):
             l: The shape parameter.
             lmb: The scale parameter.
         '''
-        [k,lmb] = self.determine_params(k,lmb,params)
-        return sum(self.logpdf(t,k,lmb)) +sum(self.logsurvival(x,k,lmb))
+        [k, lmb] = self.determine_params(k, lmb, params)
+        return sum(self.logpdf(t, k, lmb)) + sum(self.logsurvival(x, k, lmb))
 
-    def grad(self,t,x,k=0.5,lmb=0.3):
+    def grad(self, t, x, k=0.5, lmb=0.3):
         '''
         The gradient of the log-likelihood function.
         args:
@@ -115,11 +117,12 @@ class Lomax(Base):
         '''
         n = len(t)
         m = len(x)
-        delk = n/k - sum(np.log(1+lmb*t)) - sum(np.log(1+lmb*x))
-        dellmb = n/lmb -(k+1) * sum(t/(1+lmb*t)) -k*sum(x/(1+lmb*x))
-        return np.array([delk,dellmb])
+        delk = n / k - sum(np.log(1 + lmb * t)) - sum(np.log(1 + lmb * x))
+        dellmb = n / lmb - (k + 1) * sum(t / (1 + lmb * t)
+                                         ) - k * sum(x / (1 + lmb * x))
+        return np.array([delk, dellmb])
 
-    def numerical_grad(self,t,x,k=None,lmb=None):
+    def numerical_grad(self, t, x, k=None, lmb=None):
         '''
         Calculates the gradient of the log-likelihood function numerically.
         args:
@@ -132,11 +135,13 @@ class Lomax(Base):
             k = self.k
             lmb = self.lmb
         eps = 1e-5
-        delk = (self.loglik(t,x,k+eps,lmb) - self.loglik(t,x,k-eps,lmb))/2/eps
-        dellmb = (self.loglik(t,x,k,lmb+eps) - self.loglik(t,x,k,lmb-eps))/2/eps
+        delk = (self.loglik(t, x, k + eps, lmb) -
+                self.loglik(t, x, k - eps, lmb)) / 2 / eps
+        dellmb = (self.loglik(t, x, k, lmb + eps) -
+                  self.loglik(t, x, k, lmb - eps)) / 2 / eps
         return np.array([delk, dellmb])
 
-    def hessian(self,t,x,k=0.5,lmb=0.3):
+    def hessian(self, t, x, k=0.5, lmb=0.3):
         '''
         The hessian of the Loglikelihood function for Lomax.
         args:
@@ -145,17 +150,19 @@ class Lomax(Base):
             l: The shape parameter.
             lmb: The scale parameter.
         '''
-        n=len(t)
-        delksq = -n/k**2
-        dellmbsq = -n/lmb**2 + (k+1)*sum((t/(1+lmb*t))**2) + k*sum((x/(1+lmb*x))**2)
-        delklmb = -sum(t/(1+lmb*t)) - sum(x/(1+lmb*x))
-        hess = np.zeros([2,2])
-        hess[0,0] = delksq
-        hess[1,1] = dellmbsq
-        hess[0,1] = hess[1,0] = delklmb
+        n = len(t)
+        delksq = -n / k**2
+        dellmbsq = -n / lmb**2 + \
+            (k + 1) * sum((t / (1 + lmb * t))**2) + \
+            k * sum((x / (1 + lmb * x))**2)
+        delklmb = -sum(t / (1 + lmb * t)) - sum(x / (1 + lmb * x))
+        hess = np.zeros([2, 2])
+        hess[0, 0] = delksq
+        hess[1, 1] = dellmbsq
+        hess[0, 1] = hess[1, 0] = delklmb
         return hess
 
-    def numerical_hessian(self,t,x,k=0.5,lmb=0.3):
+    def numerical_hessian(self, t, x, k=0.5, lmb=0.3):
         '''
         Calculates the hessian of the log-likelihood function numerically.
         args:
@@ -165,17 +172,19 @@ class Lomax(Base):
             lmb: The scale parameter.
         '''
         eps = 1e-4
-        delksq = (self.loglik(t,x,k+2*eps,lmb) + self.loglik(t,x,k-2*eps,lmb) - 2*self.loglik(t,x,k,lmb))/4/eps/eps
-        dellmbsq = (self.loglik(t,x,k,lmb+2*eps) + self.loglik(t,x,k,lmb-2*eps) - 2*self.loglik(t,x,k,lmb))/4/eps/eps
-        dellmbk = (self.loglik(t,x,k+eps,lmb+eps) + self.loglik(t,x,k-eps,lmb-eps) 
-            - self.loglik(t,x,k+eps,lmb-eps) - self.loglik(t,x,k-eps,lmb+eps))/4/eps/eps
-        hess = np.zeros([2,2])
-        hess[0,0] = delksq
-        hess[1,1] = dellmbsq
-        hess[0,1] = hess[1,0] = dellmbk
+        delksq = (self.loglik(t, x, k + 2 * eps, lmb) + self.loglik(t, x,
+                                                                    k - 2 * eps, lmb) - 2 * self.loglik(t, x, k, lmb)) / 4 / eps / eps
+        dellmbsq = (self.loglik(t, x, k, lmb + 2 * eps) + self.loglik(t, x,
+                                                                      k, lmb - 2 * eps) - 2 * self.loglik(t, x, k, lmb)) / 4 / eps / eps
+        dellmbk = (self.loglik(t, x, k + eps, lmb + eps) + self.loglik(t, x, k - eps, lmb - eps)
+                   - self.loglik(t, x, k + eps, lmb - eps) - self.loglik(t, x, k - eps, lmb + eps)) / 4 / eps / eps
+        hess = np.zeros([2, 2])
+        hess[0, 0] = delksq
+        hess[1, 1] = dellmbsq
+        hess[0, 1] = hess[1, 0] = dellmbk
         return hess
 
-    def gradient_descent(self, numIter=2001, params = np.array([.5,.3]), verbose=False):
+    def gradient_descent(self, numIter=2001, params=np.array([.5, .3]), verbose=False):
         '''
         Performs gradient descent to get the best fitting parameters for
         this Lomax given the censored and un-censored data.
@@ -185,19 +194,23 @@ class Lomax(Base):
             verbose: Set to true for debugging. Shows progress as it fits data.
         '''
         for i in range(numIter):
-            lik = self.loglik(self.train_org,self.train_inorg,params[0],params[1])
-            directn = self.grad(self.train_org,self.train_inorg,params[0],params[1])
+            lik = self.loglik(self.train_org, self.train_inorg,
+                              params[0], params[1])
+            directn = self.grad(
+                self.train_org, self.train_inorg, params[0], params[1])
             params2 = params
-            for alp1 in [1e-8,1e-7,1e-5,1e-3,1e-2,.1]:
+            for alp1 in [1e-8, 1e-7, 1e-5, 1e-3, 1e-2, .1]:
                 params1 = params + alp1 * directn
                 if(min(params1) > 0):
-                    lik1 = self.loglik(self.train_org,self.train_inorg,params1[0],params1[1])
+                    lik1 = self.loglik(
+                        self.train_org, self.train_inorg, params1[0], params1[1])
                     if(lik1 > lik and np.isfinite(lik1)):
                         lik = lik1
                         params2 = params1
             params = params2
-            if i%100 == 0 and verbose:
-                print("Iteration " + str(i) + " ,objective function: " + str(lik) + " \nparams = " + str(params) + " \nGradient = " + str(directn))
+            if i % 100 == 0 and verbose:
+                print("Iteration " + str(i) + " ,objective function: " + str(lik) +
+                      " \nparams = " + str(params) + " \nGradient = " + str(directn))
                 print("\n########\n")
         return params
 
@@ -253,9 +266,9 @@ class Lomax(Base):
         if k is None or lmb is None:
             k = self.k
             lmb = self.lmb
-        return (intervention_cost*k - 1/lmb)
+        return (intervention_cost * k - 1 / lmb)
 
-    def expectedDT(self,tau,k,lmb,intervention_cost):
+    def expectedDT(self, tau, k, lmb, intervention_cost):
         '''
         The expected downtime incurred when the waiting threshold is set to an arbitrary value.
         args:
@@ -264,10 +277,10 @@ class Lomax(Base):
             lmb: The scale parameter of the current Lomax.
             intervention_cost: The cost of intervening.
         '''
-        return 1/lmb/(k-1) - (1/lmb/(k-1) + tau*k/(k-1))*1/(1+lmb*tau)**k + (tau + intervention_cost)*1/(1+lmb*tau)**k
+        return 1 / lmb / (k - 1) - (1 / lmb / (k - 1) + tau * k / (k - 1)) * 1 / (1 + lmb * tau)**k + (tau + intervention_cost) * 1 / (1 + lmb * tau)**k
 
     @staticmethod
-    def expectedDT_s(tau,k,lmb,intervention_cost):
+    def expectedDT_s(tau, k, lmb, intervention_cost):
         '''
         The expected downtime incurred when the waiting threshold is set to an arbitrary value (static version).
         args:
@@ -276,9 +289,9 @@ class Lomax(Base):
             lmb: The scale parameter of the current Lomax.
             intervention_cost: The cost of intervening.
         '''
-        return 1/lmb/(k-1) - (1/lmb/(k-1) + tau*k/(k-1))*1/(1+lmb*tau)**k + (tau + intervention_cost)*1/(1+lmb*tau)**k
+        return 1 / lmb / (k - 1) - (1 / lmb / (k - 1) + tau * k / (k - 1)) * 1 / (1 + lmb * tau)**k + (tau + intervention_cost) * 1 / (1 + lmb * tau)**k
 
-    def expectedT(self,tau,k=None,lmb=None,params=None):
+    def expectedT(self, tau, k=None, lmb=None, params=None):
         '''
         The expected value of the Lomax conditional on it being less than tau.
         args:
@@ -287,8 +300,8 @@ class Lomax(Base):
             lmb: The scale parameter of the current Lomax.
             params: A 2-d array with shape and scale parameters.
         '''
-        [k,lmb] = self.determine_params(k,lmb,params)
-        return (1/lmb/(k-1) - (1/lmb/(k-1) + tau*k/(k-1))*1/(1+lmb*tau)**k)/(1-1/(1+lmb*tau)**k)
+        [k, lmb] = self.determine_params(k, lmb, params)
+        return (1 / lmb / (k - 1) - (1 / lmb / (k - 1) + tau * k / (k - 1)) * 1 / (1 + lmb * tau)**k) / (1 - 1 / (1 + lmb * tau)**k)
 
     def samples(self, k=None, lmb=None, size=1000, params=None):
         '''
@@ -303,30 +316,28 @@ class Lomax(Base):
         return lomax.rvs(c=k, scale=(1 / lmb), size=size)
 
     @staticmethod
-    def samples_s(k, lmb, size = 1000):
+    def samples_s(k, lmb, size=1000):
         return lomax.rvs(c=k, scale=(1 / lmb), size=size)
 
-    def kappafn_k(self,t,x,lmb=0.1):
+    def kappafn_k(self, t, x, lmb=0.1):
         n = len(t)
-        return n/(sum(np.log(1+lmb*t)) + sum(np.log(1+lmb*x)))
+        return n / (sum(np.log(1 + lmb * t)) + sum(np.log(1 + lmb * x)))
 
-    def kappafn_lmb(self,t,x,lmb=0.1):
+    def kappafn_lmb(self, t, x, lmb=0.1):
         n = len(t)
-        return (n/lmb - sum(t/(1+lmb*t)))/(sum(t/(1+lmb*t)) + sum(x/(1+lmb*x)))
+        return (n / lmb - sum(t / (1 + lmb * t))) / (sum(t / (1 + lmb * t)) + sum(x / (1 + lmb * x)))
 
-    def bisection_fn(self,lmb=0.1):
-        return self.kappafn_k(self.train_org,self.train_inorg,lmb) - self.kappafn_lmb(self.train_org,self.train_inorg,lmb)
+    def bisection_fn(self, lmb=0.1):
+        return self.kappafn_k(self.train_org, self.train_inorg, lmb) - self.kappafn_lmb(self.train_org, self.train_inorg, lmb)
 
-    def bisection(self,a=1e-6,b=2000):
-        n=1
+    def bisection(self, a=1e-6, b=2000):
+        n = 1
         while n < 10000:
-            c=(a+b)/2
-            if self.bisection_fn(c) == 0 or (b-a)/2 < 1e-6:
+            c = (a + b) / 2
+            if self.bisection_fn(c) == 0 or (b - a) / 2 < 1e-6:
                 return c
-            n=n+1
+            n = n + 1
             if (self.bisection_fn(c) > 0) == (self.bisection_fn(a) > 0):
-                a=c
+                a = c
             else:
-                b=c
-
-
+                b = c
