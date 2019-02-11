@@ -47,40 +47,57 @@ In this section, we try and answer the question posed in section 1 - how long sh
 
 First, we'll need to observe some data on the historic arrival times of the bus and fit a distribution to them. Note however that some of our data will be incomplete since when we give up on the bus after x minutes, we only know it took more than that time for it to arrive, but not exactly how much. These are called censored observations.
 
-Here is some sample code to fit a distribution when we have some complete observations (in array, ti) and some censored observations (in array xi).
-
+Here is some sample code to fit a distribution when we have some complete observations (ti) and some censored observations (xi).
 
 ```python
 # If you don't have it already, you can install matplotlib via - 
 # pip install matplotlib
->>>import matplotlib.pyplot as plt
->>>from distributions.lomax import *
->>>from distributions.loglogistic import *
-# Some starting parameters.
->>>k=10.0; lmb=0.5; sample_size=5000; censor_level=2.0; prob=1.0
-# For now, we just assume the arrival times of the bus follow a Lomax distribution.
->>>l = Lomax(k=k, lmb=lmb)
-# Generate some samples from said Lomax distribution.
->>>samples = l.samples(size=sample_size)
-# Since we never wait for the bus more than x minutes, the observed samples are the ones that take less than x minutes.
->>>ti = samples[(samples<=censor_level)]
-# For the samples that took more than 10 minutes, add them to the censored array and all we know is they took more than x minutes but 
-# not exactly how long.
->>>xi = np.ones(sum(samples>censor_level))*censor_level
+>>> import matplotlib.pyplot as plt
+>>> from distributions.lomax import *
+>>> from distributions.loglogistic import *
+
+# Parameters for Lomax
+>>> k = 10.0; lmb = 0.5; sample_size = 5000; censor_level = 2.0; prob = 1.0
+
+# Let's assume the arrival times of the bus follow a Lomax distribution.
+>>> l = Lomax(k=k, lmb=lmb)
+
+# Generate samples from Lomax distribution.
+>>> samples = l.samples(size=sample_size)
+
+# Since we never wait for the bus more than x minutes,
+# the observed samples are the ones that take less than x minutes.
+>>> ti = samples[(samples<=censor_level)]
+
+# For the samples that took more than 10 minutes, add them to the censored array 
+# all we know is they took more than x minutes but not exactly how long.
+>>> xi = np.ones(sum(samples>censor_level))*censor_level
+
 # Fit a log logistic model to the data we just generated (since we won't know the actual distribution in the real world, 
 # we are fitting a distribution other than the one that generated the data). 
 # Ignore the warnings.
->>>ll1 = LogLogistic(ti=ti, xi=xi)
+>>> ll1 = LogLogistic(ti=ti, xi=xi)
+
 # See how well the distribution fits the histogram.
->>>histo = plt.hist(samples, normed=True)
->>>xs = (histo[1][:len(histo[1])-1]+histo[1][1:])/2
->>>plt.plot(xs, [ll1.pdf(i) for i in xs])
->>>plt.show()
+>>> histo = plt.hist(samples, normed=True)
+>>> xs = (histo[1][:len(histo[1])-1]+histo[1][1:])/2
+
+>>> plt.plot(xs, [ll1.pdf(i) for i in xs])
+>>> plt.show()
 ```
 
 <a href="https://ryu577.github.io/jekyll/update/2018/05/22/optimum_waiting_thresholds.html" 
 target="_blank"><img src="https://github.com/ryu577/ryu577.github.io/blob/master/Downloads/opt_thresholds/loglogistic_on_lomax.png" 
 alt="Image formed by above method" width="240" height="180" border="10" /></a>
+
+### 3.1 What is lomax distribution?
+
+It is basically a Pareto distribution that has been shifted so that its support begins at zero. A heavy tailed distribution. For a non-negative random variable.
+Two parameters define the distribution: scale parameter λ and shape parameter κ (sometimes denoted as α). The shorthand X ∼ Lomax(λ,κ) indicates the random variable X has a Lomax distribution with those two parameters.
+
+### 3.2 What is log logistic distribution?
+
+The probability distribution of a random variable whose logarithm has a logistic distribution. For a non-negative random variable. It is used in survival analysis as a parametric model for events whose rate increases initially and decreases later, for example mortality rate from cancer.
 
 ## 4. Optimizing waiting threshold using the distribution
 
@@ -100,15 +117,18 @@ Continuing from above, we can run the following code:
 
 
 ```python
-# The time it takes to walk to work and the amount of 
-# time we wait for the bus before walking respectively.
-intervention_cost=200; tau=275
+# The time it takes to walk to work 
+intervention_cost=200
 
-# The transition probabilities and transition times depend on 
-# the amount of time we're willing to wait for the bus, tau
-# and the amount of time it takes to walk to work, intervention_cost.
->>>(p,t) = ll1.construct_matrices(tau, intervention_cost)
->>>p
+# The amount of time we wait for the bus before walking respectively.
+tau=275
+
+# The transition probabilities (p) and transition times (t) depend on 
+# the amount of time we're willing to wait for the bus (tau)
+# and the amount of time it takes to walk to work (intervention_cost).
+>>> (p,t) = ll1.construct_matrices(tau, intervention_cost)
+
+>>> p
 matrix([[ 0.        ,  0.00652163,  0.99347837],
         [ 0.        ,  0.        ,  1.        ],
         [ 0.1       ,  0.9       ,  0.        ]])
@@ -135,11 +155,11 @@ Notice how the code that generated the transition matrices is a function of the 
 We can simply test many values of the threshold and pick the one that gives us the highest proportion of time spent in the 'working' state.
 
 ```python
->>>probs = []
->>>for tau in np.arange(10,900,1):
+>>> probs = []
+>>> for tau in np.arange(10,900,1):
 >>>	 (p,t) = ll1.construct_matrices(tau, intervention_cost)
 >>>	 probs.append(steady_state(p, t)[2])
->>>opt_tau_1 = np.arange(10,900,1)[np.argmax(probs)]
+>>> opt_tau_1 = np.arange(10,900,1)[np.argmax(probs)]
 ```
 
 Then, we can also calculate the optimal threshold <a href="https://github.com/ryu577/survival/blob/443e23d761656fad0069a3e0572d08f0706e8618/distributions/basemodel.py#L101">based on the parametric distribution</a>.
