@@ -91,10 +91,10 @@ Here is some sample code to fit a distribution when we have some complete observ
 target="_blank"><img src="https://github.com/ryu577/ryu577.github.io/blob/master/Downloads/opt_thresholds/loglogistic_on_lomax.png" 
 alt="Image formed by above method" width="240" height="180" border="10" /></a>
 
-### 3.1 What is lomax?
+### 3.1 What is lomax distribution?
 
 
-### 3.2 What is loglogistics?
+### 3.2 What is log logistics distribution?
 
 
 ## 4. Optimizing waiting threshold using the distribution
@@ -115,15 +115,18 @@ Continuing from above, we can run the following code:
 
 
 ```python
-# The time it takes to walk to work and the amount of 
-# time we wait for the bus before walking respectively.
-intervention_cost=200; tau=275
+# The time it takes to walk to work 
+intervention_cost=200
 
-# The transition probabilities and transition times depend on 
-# the amount of time we're willing to wait for the bus, tau
-# and the amount of time it takes to walk to work, intervention_cost.
->>>(p,t) = ll1.construct_matrices(tau, intervention_cost)
->>>p
+# The amount of time we wait for the bus before walking respectively.
+tau=275
+
+# The transition probabilities (p) and transition times (t) depend on 
+# the amount of time we're willing to wait for the bus (tau)
+# and the amount of time it takes to walk to work (intervention_cost).
+>>> (p,t) = ll1.construct_matrices(tau, intervention_cost)
+
+>>> p
 matrix([[ 0.        ,  0.00652163,  0.99347837],
         [ 0.        ,  0.        ,  1.        ],
         [ 0.1       ,  0.9       ,  0.        ]])
@@ -150,11 +153,11 @@ Notice how the code that generated the transition matrices is a function of the 
 We can simply test many values of the threshold and pick the one that gives us the highest proportion of time spent in the 'working' state.
 
 ```python
->>>probs = []
->>>for tau in np.arange(10,900,1):
+>>> probs = []
+>>> for tau in np.arange(10,900,1):
 >>>	 (p,t) = ll1.construct_matrices(tau, intervention_cost)
 >>>	 probs.append(steady_state(p, t)[2])
->>>opt_tau_1 = np.arange(10,900,1)[np.argmax(probs)]
+>>> opt_tau_1 = np.arange(10,900,1)[np.argmax(probs)]
 ```
 
 Then, we can also calculate the optimal threshold <a href="https://github.com/ryu577/survival/blob/443e23d761656fad0069a3e0572d08f0706e8618/distributions/basemodel.py#L101">based on the parametric distribution</a>.
