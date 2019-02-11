@@ -53,34 +53,49 @@ Here is some sample code to fit a distribution when we have some complete observ
 ```python
 # If you don't have it already, you can install matplotlib via - 
 # pip install matplotlib
->>>import matplotlib.pyplot as plt
->>>from distributions.lomax import *
->>>from distributions.loglogistic import *
-# Some starting parameters.
->>>k=10.0; lmb=0.5; sample_size=5000; censor_level=2.0; prob=1.0
+>>> import matplotlib.pyplot as plt
+>>> from distributions.lomax import *
+>>> from distributions.loglogistic import *
+
+# Parameters for Lomax
+>>> k = 10.0; lmb = 0.5; sample_size = 5000; censor_level = 2.0; prob = 1.0
+
 # For now, we just assume the arrival times of the bus follow a Lomax distribution.
->>>l = Lomax(k=k, lmb=lmb)
-# Generate some samples from said Lomax distribution.
->>>samples = l.samples(size=sample_size)
-# Since we never wait for the bus more than x minutes, the observed samples are the ones that take less than x minutes.
->>>ti = samples[(samples<=censor_level)]
-# For the samples that took more than 10 minutes, add them to the censored array and all we know is they took more than x minutes but 
-# not exactly how long.
->>>xi = np.ones(sum(samples>censor_level))*censor_level
+>>> l = Lomax(k=k, lmb=lmb)
+
+# Generate samples from Lomax distribution.
+>>> samples = l.samples(size=sample_size)
+
+# Since we never wait for the bus more than x minutes,
+# the observed samples are the ones that take less than x minutes.
+>>> ti = samples[(samples<=censor_level)]
+
+# For the samples that took more than 10 minutes, add them to the censored array 
+# all we know is they took more than x minutes but not exactly how long.
+>>> xi = np.ones(sum(samples>censor_level))*censor_level
+
 # Fit a log logistic model to the data we just generated (since we won't know the actual distribution in the real world, 
 # we are fitting a distribution other than the one that generated the data). 
 # Ignore the warnings.
->>>ll1 = LogLogistic(ti=ti, xi=xi)
+>>> ll1 = LogLogistic(ti=ti, xi=xi)
+
 # See how well the distribution fits the histogram.
->>>histo = plt.hist(samples, normed=True)
->>>xs = (histo[1][:len(histo[1])-1]+histo[1][1:])/2
->>>plt.plot(xs, [ll1.pdf(i) for i in xs])
->>>plt.show()
+>>> histo = plt.hist(samples, normed=True)
+>>> xs = (histo[1][:len(histo[1])-1]+histo[1][1:])/2
+
+>>> plt.plot(xs, [ll1.pdf(i) for i in xs])
+>>> plt.show()
 ```
 
 <a href="https://ryu577.github.io/jekyll/update/2018/05/22/optimum_waiting_thresholds.html" 
 target="_blank"><img src="https://github.com/ryu577/ryu577.github.io/blob/master/Downloads/opt_thresholds/loglogistic_on_lomax.png" 
 alt="Image formed by above method" width="240" height="180" border="10" /></a>
+
+### 3.1 What is lomax?
+
+
+### 3.2 What is loglogistics?
+
 
 ## 4. Optimizing waiting threshold using the distribution
 
