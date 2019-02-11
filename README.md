@@ -93,6 +93,7 @@ alt="Image formed by above method" width="240" height="180" border="10" /></a>
 ### 3.1 What is lomax distribution?
 
 It is basically a Pareto distribution that has been shifted so that its support begins at zero. A heavy tailed distribution. For a non-negative random variable.
+Two parameters define the distribution: scale parameter λ and shape parameter κ (sometimes denoted as α). The shorthand X ∼ Lomax(λ,κ) indicates the random variable X has a Lomax distribution with those two parameters.
 
 ### 3.2 What is log logistic distribution?
 
