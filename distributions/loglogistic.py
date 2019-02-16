@@ -164,7 +164,7 @@ class LogLogistic(Base):
         '''
         if len(self.w_org) == len(t) and len(self.w_inorg) == len(x):
             n = np.sum(self.w_org)
-            m = np.sum(self.w_inorg)        
+            m = np.sum(self.w_inorg)
             delalp = -n*beta/alp +2*beta/alp**(beta+1) * sum(t**beta/(1+(t/alp)**beta)*self.w_org) \
                      + beta/alp**(beta+1)*sum(x**beta/(1+(x/alp)**beta)*self.w_inorg)
             delbeta = n/beta -n*np.log(alp) + sum(np.log(t)*self.w_org) -2*sum((t/alp)**beta/(1+(t/alp)**beta)*np.log(t/alp)*self.w_org) \
