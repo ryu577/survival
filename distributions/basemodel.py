@@ -151,7 +151,8 @@ class Base(object):
 
     def numerical_grad(self,t,x,alp,beta):
         '''
-        Numerically evaluates the gradient (vector of partial derivatives w.r.t. each parameter.)
+        Numerically evaluates the gradient (vector of partial derivatives 
+        w.r.t. each parameter.)
         args:
             t: The array of survival times.
             x: The array of censored survivals.
@@ -172,7 +173,8 @@ class Base(object):
             numIter: The number of iterations gradient descent should run for.
             params: The starting parameters where it starts.
             verbose: To print progress in iterations or not.
-            gamma: In case of L2 regularization, the strength of the regularizer. Zero by default.
+            gamma: In case of L2 regularization, the strength of the regularizer. 
+                   Zero by default.
             params0: The parameters the L2 regularization should stay close to.
             step_lengths: The step lengths along the gradient the algorithm should check 
                           and make the step with the best improvement in objective function.
@@ -187,7 +189,8 @@ class Base(object):
             # In 20% of the iterations, we set all but one of the gradient dimensions to zero. 
             # This works better in practice.
             if i%100 > 80:
-                directn[np.random.choice(len(params),1)[0]] = 0 # Randomly set one coordinate to zero.
+                # Randomly set one coordinate to zero.
+                directn[np.random.choice(len(params),1)[0]] = 0
             params2 = params + 1e-10*directn
             lik = self.loglik(self.train_org, self.train_inorg, params2[0], params2[1])
             alp_used = step_lengths[0]

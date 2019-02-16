@@ -63,7 +63,7 @@ class Weibull(Base):
         args:
             x: The value at which to evaluate.
             k: The shape parameter.
-            lmb: The scale parameter.            
+            lmb: The scale parameter.
         '''
         [k,lmb] = self.determine_params(k,lmb,params)
         return k/lmb*(x/lmb)**(k-1)*np.exp(-(x/lmb)**k)
@@ -244,18 +244,18 @@ class Weibull(Base):
             dellmb = -n*k/lmb + k/(lmb**(k+1)) * (sum(t**k) + sum(x**k))
             return np.array([delk,dellmb])
 
-    def get_params(self,W):
+    def get_params(self, W, i):
         '''
         In the case of regressing against features, 
         we want to ensure that the final features
         are always positive. For this, we apply 
         sigmoid functions to the output of what we
-        get from multiplying the parametres matrix
+        get from multiplying the parameter matrix
         with the feature vector.
         args:
             W: The parameter matrix.
         '''
-        theta = np.dot(W.T,x[i])
+        theta = np.dot(W.T,self.x[i])
         kappa = softmax(theta[0],6.0)
         lmb = softmax(theta[1],1000.0)
         return np.array([kappa,lmb])
@@ -374,7 +374,8 @@ class Weibull(Base):
         args:
             intervention_cost: The cost of giving up on this distribution.
         '''
-        return self.lmb ** (self.k / (self.k - 1)) / (intervention_cost * self.k) ** (1 / (self.k - 1))
+        return self.lmb ** (self.k / (self.k - 1)) / \
+            (intervention_cost * self.k) ** (1 / (self.k - 1))
 
     def samples(self, size = 1000):
         '''
@@ -383,7 +384,6 @@ class Weibull(Base):
             size: The number of samples to be generated.
         '''
         return exponweib.rvs(a=1,c=self.k,scale=self.lmb,size=size)
-
 
 
 def generate_features(size):

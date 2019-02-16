@@ -148,6 +148,6 @@ def test_lomax_matrix(k=1.1, lmb=0.5, intervention_cost=200):
 
 
 
-xs=np.arange(0.1,150,0.1)
-ys=[self.loglik(self.train_org, self.train_inorg, i, ll1.beta) for i in xs]
+#xs=np.arange(0.1,150,0.1)
+#ys=[self.loglik(self.train_org, self.train_inorg, i, ll1.beta) for i in xs]
 
