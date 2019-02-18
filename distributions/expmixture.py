@@ -55,44 +55,52 @@ class ExpMix():
         s_len = int(n_samples*u)
         t_samples = np.random.exponential(1/lmb,size=t_len)
         s_samples = np.random.exponential(1/mu,size=s_len)
-        x_censored = np.concatenate((t_samples[t_samples>censor],\
-                s_samples[s_samples>censor]),axis=0)
-        t = t_samples[t_samples<censor]
-        s = s_samples[s_samples<censor]
-        return s,t,np.ones(len(x_censored))*censor
+        if type(censor) == int or type(censor) == float:
+            t_censor = np.ones(t_len)*censor
+            s_censor = np.ones(s_len)*censor
+        elif type(censor) == np.ndarray:
+            t_censor = np.random.choice(censor, size=t_len)
+            s_censor = np.random.choice(censor, size=s_len)
+        x_censored = np.concatenate((t_censor[t_samples>t_censor],\
+                s_censor[s_samples>s_censor]),axis=0)
+        t = t_samples[t_samples<t_censor]
+        s = s_samples[s_samples<s_censor]
+        xt = t_censor[t_samples<t_censor]
+        xs = s_censor[s_samples<s_censor]
+        return s,t,x_censored, xs, xt
 
     def samples(self, n_samples, censor):
         return ExpMix.samples_(self.mu, self.lmb, self.u\
                              ,n_samples, censor)
 
-def tst_em():
-    mu_o=1/10; lmb_o=1/5; u_o=0.3; c=8
-    tau_o = u_o*np.exp(-mu_o*c)/(u_o*np.exp(-mu_o*c)+(1-u_o)*np.exp(-lmb_o*c))
-    s,t,x = ExpMix.samples_(mu_o,lmb_o,u_o,50000,c)
-    em = ExpMix(s,t,x)
-    mu_est = len(s)/(sum(s)+sum(tau_o*x))
-    lmb_est = len(t)/(sum(t)+sum((1-tau_o)*x))
 
-    print(str(mu_o)+","+str(mu_est))
-    print(str(lmb_o)+","+str(lmb_est))
+def tst_em(mu_o=1/10, lmb_o=1/5, u_o=0.8, c=8):
+    #mu_o=1/10; lmb_o=1/10; u_o=0.3; c=8
+    #tau_o = u_o*np.exp(-mu_o*c)/(u_o*np.exp(-mu_o*c)+(1-u_o)*np.exp(-lmb_o*c))
+    s, t, x, xs, xt = ExpMix.samples_(mu_o,lmb_o,u_o,50000,c)
+    em = ExpMix(s,t,x)
+    #mu_est = len(s)/(sum(s)+sum(tau_o*x))
+    #lmb_est = len(t)/(sum(t)+sum((1-tau_o)*x))
+
+    #print(str(mu_o)+","+str(mu_est))
+    #print(str(lmb_o)+","+str(lmb_est))
     ns=len(s); nt=len(t); nx=len(x)
 
-    u_est = ns*(1-np.exp(-lmb_o*c))/(ns*(1-np.exp(-lmb_o*c))+nt*(1-np.exp(-mu_o*c)))
-    print(str(u_o)+","+str(u_est))
+    #u_est = ns*(1-np.exp(-lmb_o*c))/(ns*(1-np.exp(-lmb_o*c))+nt*(1-np.exp(-mu_o*c)))
+    #print(str(u_o)+","+str(u_est))    
 
-    grd = em.grad(mu_o,lmb_o,u_o)
-
-    lmb=0.2;mu=0.9
+    lmb=0.2; mu=0.9
     for tt in range(500):
-        u = ns*(1-np.exp(-lmb*c))/(ns*(1-np.exp(-lmb*c))+nt*(1-np.exp(-mu*c)))
+        lmb_sur = np.mean(np.exp(-lmb*xt))
+        mu_sur = np.mean(np.exp(-mu*xs))
+        u = ns*(1-lmb_sur)/(ns*(1-lmb_sur)+nt*(1-mu_sur))
         ## The actual probability of seeing sample beyong censor pt from sample-1.
-        tau = u*np.exp(-mu*c)/(u*np.exp(-mu*c)+(1-u)*np.exp(-lmb*c))
+        tau = u*np.exp(-mu*x)/(u*np.exp(-mu*x)+(1-u)*np.exp(-lmb*x))
         ## Use tau to estimate the rate parameters.
         mu = len(s)/(sum(s)+sum(tau*x))
         lmb = len(t)/(sum(t)+sum((1-tau)*x))
         if tt%100 == 0:
             print("mu:" + str(mu) + ", lmb:"+str(lmb)+", u:"+str(u))
-
 
 
 if __name__ == '__main__':
