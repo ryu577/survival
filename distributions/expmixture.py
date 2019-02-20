@@ -87,7 +87,7 @@ def tst_em(mu_o=1/10, lmb_o=1/5, u_o=0.8, c=8):
     ns=len(s); nt=len(t); nx=len(x)
 
     #u_est = ns*(1-np.exp(-lmb_o*c))/(ns*(1-np.exp(-lmb_o*c))+nt*(1-np.exp(-mu_o*c)))
-    #print(str(u_o)+","+str(u_est))    
+    #print(str(u_o)+","+str(u_est))
 
     lmb=0.2; mu=0.9
     for tt in range(500):
@@ -113,7 +113,6 @@ if __name__ == '__main__':
     print(mu-mu_est)
     print(lmb-lmb_est)
     print(grd)
-
 
 
 
