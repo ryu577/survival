@@ -72,8 +72,8 @@ class ExpMix():
     def samples(self, n_samples, censor):
         return ExpMix.samples_(self.mu, self.lmb, self.u\
                              ,n_samples, censor)
-    
-    
+
+
 
 def tst_em(mu_o=1/10, lmb_o=1/5, u_o=0.8, c=8):
     #mu_o=1/10; lmb_o=1/10; u_o=0.3; c=8
