@@ -13,7 +13,7 @@ class LogLogistic(Base):
     and beta=lmb always.
     '''
 
-    def __init__(self, alp=1, beta=0.5, ti=None, xi=None,
+    def __init__(self, ti=None, xi=None, alp=1, beta=0.5, 
                  params=np.array([1.1, 1.1]),
                  w_org=None, w_inorg=None, verbose=False):
         '''
@@ -98,7 +98,11 @@ class LogLogistic(Base):
         [beta, alpha] = self.determine_params(beta, alpha, None)
         return alpha * (1 / u - 1)**(-1 / beta)
 
-    def samples(self, size=1000, alpha=None, beta=None):
+    @staticmethod
+    def inv_cdf_(u, alpha, beta):
+        return alpha * (1 / u - 1)**(-1 / beta)
+
+    def samples(self, alpha=None, beta=None, size=1000):
         '''
         Generates samples from a log logistic distribution.
         args:
@@ -109,13 +113,17 @@ class LogLogistic(Base):
         [beta, alpha] = self.determine_params(beta, alpha, None)
         return self.inv_cdf(np.random.uniform(size=size), alpha, beta)
 
+    @staticmethod
+    def samples_(alpha, beta, size=1000):
+        return LogLogistic.inv_cdf_(np.random.uniform(size=size), alpha, beta)
+
     def logpdf(self, x, alpha, beta):
         '''
         The logarithm of the PDF of the distribution.
         args:
             x: The value at which the function is to be evaluated.
             alpha: The shape parameter.
-            beta: The scale parameter.            
+            beta: The scale parameter.
         '''
         [beta, alpha] = self.determine_params(beta, alpha, None)
         return np.log(beta) - np.log(alpha) +\
@@ -136,14 +144,14 @@ class LogLogistic(Base):
 
     def logsurvival(self, x, alpha, beta):
         '''
-        The logarithm of the survival function of the 
+        The logarithm of the survival function of the
         distribution (probability that it is greater than x).
-        For now, we simply take the log, but we can possibly 
+        For now, we simply take the log, but we can possibly
         improve the efficiency numerically in the future.
         args:
             x: Evaluated here.
             alpha: Shape parameter.
-            beta: Scale parameter.            
+            beta: Scale parameter.
         '''
         [beta, alpha] = self.determine_params(beta, alpha, None)
         return np.log(self.survival(x, alpha, beta))
@@ -193,7 +201,8 @@ class LogLogistic(Base):
         else:
             n = len(t)
             m = len(x)
-            delalp = -n * beta / alp + 2 * beta / alp**(beta + 1) * sum(t**beta / (1 + (t / alp)**beta)) \
+            delalp = -n * beta / alp + 2 * beta / alp**(beta + 1) *\
+             sum(t**beta / (1 + (t / alp)**beta)) \
                 + beta / alp**(beta + 1) * sum(x**beta / (1 + (x / alp)**beta))
             delbeta = n / beta - n * np.log(alp) + \
                 sum(np.log(t)) - 2 * sum((t / alp)**beta / (1 + (t / alp)**beta) * np.log(t / alp)) \
@@ -215,3 +224,4 @@ class LogLogistic(Base):
 
 def ll_haz_rate(alpha, beta, t):
     return (beta / alpha) * (t / alpha)**(beta - 1) / (1 + (t / alpha)**beta)
+
