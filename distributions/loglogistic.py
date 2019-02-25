@@ -15,7 +15,8 @@ class LogLogistic(Base):
 
     def __init__(self, ti=None, xi=None, alp=1, beta=0.5, 
                  params=np.array([1.1, 1.1]),
-                 w_org=None, w_inorg=None, verbose=False):
+                 w_org=None, w_inorg=None, verbose=False,
+                 step_lengths=np.array([1e-8,1e-5, 1e-3,1e-2])):
         '''
         Initializes an instance of the log logistic distribution.
         '''
@@ -32,7 +33,8 @@ class LogLogistic(Base):
                 self.w_inorg = np.ones(len(xi))
             else:
                 self.w_inorg = w_inorg
-            self.gradient_descent(params=params, verbose=verbose)
+            self.gradient_descent(params=params, verbose=verbose, 
+                            step_lengths=step_lengths)
         else:
             self.train = []
             self.test = []

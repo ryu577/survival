@@ -167,7 +167,8 @@ class Base(object):
         return np.array([delalp, delbeta])
 
     def gradient_descent(self, numIter=2001, params=np.array([2.0, 2.0]), verbose=False,
-                         step_lengths=[1e-8, 1e-7, 1e-5, 1e-3, 1e-2, .1, 10, 50, 70, 120, 150, 200, 250, 270, 300, 500, 1e3, 1.5e3, 2e3, 3e3]):
+        step_lengths=[1e-8, 1e-7, 1e-5, 1e-3, 1e-2, .1, 10, 50, 70, 120, 150, 200, 250, 270, 300, 500, 1e3, 1.5e3, 2e3, 3e3]
+        ):
         '''
         Performs gradient descent to fit the parameters of our distribution.
         args:
@@ -180,6 +181,7 @@ class Base(object):
             step_lengths: The step lengths along the gradient the algorithm should check 
                           and make the step with the best improvement in objective function.
         '''
+        self.step_lens = {}
         for i in range(numIter):
             #lik = self.loglik(self.train_org,self.train_inorg,params[0],params[1],params[2])
             directn = self.grad(
@@ -189,9 +191,10 @@ class Base(object):
                 self.final_loglik = self.loglik(
                     self.train_org, self.train_inorg, params[0], params[1])
                 return params
-            # In 20% of the iterations, we set all but one of the gradient dimensions to zero.
+            # In 20% of the iterations, we set all but one of the gradient
+            # dimensions to zero.
             # This works better in practice.
-            if i % 100 > 80:
+            if i % 100 > 60:
                 # Randomly set one coordinate to zero.
                 directn[np.random.choice(len(params), 1)[0]] = 0
             params2 = params + 1e-10 * directn
@@ -207,11 +210,16 @@ class Base(object):
                         lik = lik1
                         params2 = params1
                         alp_used = alp1
+            if alp_used in self.step_lens:
+                self.step_lens[alp_used] += 1
+            else:
+                self.step_lens[alp_used] = 1
             params = params2
             if i % 100 == 0:
                 if verbose:
-                    print("Itrn " + str(i) + " ,obj fn: " + str(lik) + " \nparams = " + str(
-                        params) + " \ngradient = " + str(directn) + "\nstep_len=" + str(alp_used))
+                    print("Itrn " + str(i) + " ,obj fn: " + str(lik) + " \nparams = " + 
+                        str(params) + " \ngradient = " + str(directn) + 
+                            "\nstep_len=" + str(alp_used))
                     print("\n########\n")
         self.set_params(params[0], params[1], params)
         self.final_loglik = lik
@@ -220,7 +228,8 @@ class Base(object):
     def newtonRh(self, numIter=101, params=np.array([1.0, 0.5]), verbose=False):
         '''
         Fits the parameters of a distribution to data (censored and uncensored).
-        Uses the Newton Raphson method for explanation, see: https://www.youtube.com/watch?v=acsSIyDugP0
+        Uses the Newton Raphson method for explanation, see: 
+        https://www.youtube.com/watch?v=acsSIyDugP0
         args:
             numIter: The maximum number of iterations for the iterative method
             params: The initial guess for the shape and scale parameters respectively.
