@@ -1,10 +1,11 @@
 import numpy as np
 
 class ExpMix():
-    def __init__(self, s, t, x, xs=None, xt=None):
+    def __init__(self, s, t, x, xs=None, xt=None, wts=None):
         self.s = s
         self.t = t
         self.x = x
+        self.wts = wts
         if xs is None:
             self.xs = np.ones(len(s))*max(s)
         else:
