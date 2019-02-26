@@ -1,11 +1,22 @@
 import numpy as np
 
 class ExpMix():
-    def __init__(self, s, t, x, xs=None, xt=None, wts=None):
+    def __init__(self, s, t, x, xs=None, xt=None, ws=None, wt=None, wx=None):
         self.s = s
         self.t = t
         self.x = x
-        self.wts = wts
+        if ws is None:
+            self.ws = np.ones(len(s))
+        else:
+            self.ws = ws
+        if wt is None:
+            self.wt = np.ones(len(t))
+        else:
+            self.wt = wt
+        if wx is None:
+            self.wx = np.ones(len(x))
+        else:
+            self.wx = wx
         if xs is None:
             self.xs = np.ones(len(s))*max(s)
         else:
@@ -83,17 +94,21 @@ class ExpMix():
                              ,n_samples, censor)
 
     @staticmethod
-    def estimate_em_(s,t,x,xs,xt,verbose=False):
-        ns=len(s); nt=len(t);
-        mu=len(s)/sum(s); lmb=len(t)/sum(t)
+    def estimate_em_(s,t,x,xs,xt,ws=None,wt=None,wx=None,verbose=False):
+        if ws is None:
+            ws=np.ones(len(s)); wt=np.ones(len(t)); wx=np.ones(len(x))
+        #ns=len(s); nt=len(t);
+        ns=sum(ws); nt=sum(wt);
+        #mu=len(s)/sum(s); lmb=len(t)/sum(t)
+        mu=sum(ws)/sum(ws*s); lmb=sum(wt)/sum(wt*t)
         mu_prev = mu
         for tt in range(500):
-            lmb_sur = np.mean(np.exp(-lmb*xt))
-            mu_sur = np.mean(np.exp(-mu*xs))
+            lmb_sur = np.mean(np.exp(-lmb*xt*wt))
+            mu_sur = np.mean(np.exp(-mu*xs*ws))
             u = ns*(1-lmb_sur)/(ns*(1-lmb_sur)+nt*(1-mu_sur))
-            tau = u*np.exp(-mu*x)/(u*np.exp(-mu*x)+(1-u)*np.exp(-lmb*x))
-            mu = len(s)/(sum(s)+sum(tau*x))
-            lmb = len(t)/(sum(t)+sum((1-tau)*x))
+            tau = u*np.exp(-mu*x*wx)/(u*np.exp(-mu*x*wx)+(1-u)*np.exp(-lmb*x*wx))
+            mu = sum(ws)/(sum(s*ws)+sum(tau*x*wx))
+            lmb = sum(wt)/(sum(t*wt)+sum((1-tau)*x*wx))
             if verbose and tt%100 == 0:
                 print("mu:" + str(mu) + ", lmb:"+str(lmb)+", u:"+str(u))
             if(abs(mu_prev-mu)<1e-3):
@@ -103,6 +118,7 @@ class ExpMix():
     
     def estimate_em(self,verbose=False):
         self.mu, self.lmb, self.u = self.estimate_em_(self.s,\
-                            self.t, self.x, self.xs, self.xt, verbose)
+                            self.t, self.x, self.xs, self.xt, 
+                            self.wt, self.ws, self.wx, verbose)
 
 
