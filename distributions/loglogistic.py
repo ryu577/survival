@@ -93,7 +93,7 @@ class LogLogistic(Base):
         args:
             u: A number between 0 and 1.
             alpha: The shape parameter.
-            beta: The scale parameter.            
+            beta: The scale parameter.
         '''
         [beta, alpha] = self.determine_params(beta, alpha, None)
         return alpha * (1 / u - 1)**(-1 / beta)
@@ -115,7 +115,7 @@ class LogLogistic(Base):
         args:
             x: The value at which the function is to be evaluated.
             alpha: The shape parameter.
-            beta: The scale parameter.            
+            beta: The scale parameter.
         '''
         [beta, alpha] = self.determine_params(beta, alpha, None)
         return np.log(beta) - np.log(alpha) +\
@@ -129,7 +129,7 @@ class LogLogistic(Base):
         args:
             x: Evaluated here.
             alpha: Shape parameter.
-            beta: Scale parameter.            
+            beta: Scale parameter.
         '''
         [beta, alpha] = self.determine_params(beta, alpha, None)
         return 1 - self.cdf(x, alpha, beta)
