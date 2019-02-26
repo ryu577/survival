@@ -2,6 +2,7 @@ import numpy as np
 from scipy.stats import exponweib
 from misc.sigmoid import *
 from distributions.basemodel import *
+from optimization.optimizn import *
 
 class Weibull(Base):
     '''
@@ -10,7 +11,7 @@ class Weibull(Base):
     regressing features.
     '''
 
-    def __init__(self, k=None, lmb=None, ti=None, xi=None):
+    def __init__(self, ti=None, xi=None, k=None, lmb=None):
         '''
         Initializes an instance of the Weibull distribution.
         '''
@@ -23,11 +24,9 @@ class Weibull(Base):
             self.x_censored = None
             [self.k, self.lmb] = self.gradient_descent(
                 params=np.array([.5, .3]))
-        else:
+        else: ##This path should seldom be used.
             self.train = []
             self.test = []
-            self.train_org = []
-            self.train_inorg = []
             self.k = k
             self.lmb = lmb
             self.params = []
@@ -37,6 +36,8 @@ class Weibull(Base):
             self.x_samples = x_samples[t < 1.5, ]
             self.x = np.ones(sum(t > 1.5)) * 1.5
             self.t = t[t < 1.5]
+            self.train_org = np.copy(self.t)
+            self.train_inorg = np.copy(self.x)
 
     def determine_params(self, k, lmb, params):
         '''
@@ -259,6 +260,42 @@ class Weibull(Base):
                 (lmb**(k + 1)) * (sum(t**k) + sum(x**k))
             return np.array([delk, dellmb])
 
+    @staticmethod
+    def kappa_fn_(t, k):
+        '''
+        The kappa function. Setting this to zero gives us
+        the kappa parameter assuming no censoring of the data.
+        https://en.wikipedia.org/wiki/Weibull_distribution
+        '''
+        n = len(t)
+        return sum(t**k*np.log(t))/sum(t**k) - 1/k -1/n*sum(np.log(t))
+
+    @staticmethod
+    def kappa_fn_wcensoring(t, x, k):
+        n = len(t)
+        return n / k + sum(np.log(t)) - n * (sum(t**k * np.log(t)) \
+                + sum(x**k * np.log(x))) / (sum(x**k) + sum(t**k))
+
+    def kappa_fn(self, k):
+        return self.kappa_fn_(self.t, k)
+
+    @staticmethod
+    def lmbd_fn(t, k):
+        n = len(t)
+        return (sum(t**k) / n)**(1 / k)
+    
+    @staticmethod
+    def lmbd_fn_wcensoring(t, x, k):
+        n = len(t)
+        return ((sum(t**k) + sum(x**k)) / n)**(1 / k)
+
+    @staticmethod
+    def est_params(t):
+        fn = lambda k: Weibull.kappa_fn_(t, k)
+        k = bisection(fn, 0.1, 100)
+        lmb = Weibull.lmbd_fn(t, k)
+        return k, lmb
+
     def get_params(self, W, i):
         '''
         In the case of regressing against features, 
@@ -271,8 +308,8 @@ class Weibull(Base):
             W: The parameter matrix.
         '''
         theta = np.dot(W.T,self.x[i])
-        kappa = softmax(theta[0],6.0)
-        lmb = softmax(theta[1],1000.0)
+        kappa = Sigmoid.transform(theta[0],6.0)
+        lmb = Sigmoid.transform(theta[1],1000.0)
         return np.array([kappa,lmb])
 
     def numerical_grad(self, t, x, k=0.5, lmb=0.3, W=None, x_samples=None, x_censored=None):
@@ -366,26 +403,6 @@ class Weibull(Base):
         hess[0, 1] = hess[1, 0] = dellmbk
         return hess
 
-    def lmbd(self, t, x, k):
-        n = len(x)
-        return ((sum(t**k) + sum(x**k)) / n)**(1 / k)
-
-    def kappa(self, t, x, k):
-        n = len(t)
-        return n / k + sum(np.log(t)) - n * (sum(t**k * np.log(t)) + sum(x**k * np.log(x))) / (sum(x**k) + sum(t**k))
-
-    def bisection(self, a=1e-6, b=1000):
-        n = 1
-        while n < 10000:
-            c = (a + b) / 2
-            if self.kappa(self.train_org, self.train_inorg, c) == 0 or (b - a) / 2 < 1e-6:
-                return c
-            n = n + 1
-            if (self.kappa(self.train_org, self.train_inorg, c) > 0) == (self.kappa(self.train_org, self.train_inorg, c) > 0):
-                a = c
-            else:
-                b = c
-
     def optimal_wait_threshold(self, intervention_cost):
         '''
         Given the cost of plan B (intervention_cost), what
@@ -403,6 +420,11 @@ class Weibull(Base):
             size: The number of samples to be generated.
         '''
         return exponweib.rvs(a=1, c=self.k, scale=self.lmb, size=size)
+
+    @staticmethod
+    def samples_(k, lmb, size=1000):
+        return exponweib.rvs(a=1, c=k, scale=lmb, size=size)
+
 
 def generate_features(size):
     x1 = np.array([[1, 1, 0], [1, 1, 0]])

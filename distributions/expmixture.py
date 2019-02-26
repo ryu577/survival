@@ -1,10 +1,19 @@
 import numpy as np
 
 class ExpMix():
-    def __init__(self, s, t, x):
+    def __init__(self, s, t, x, xs=None, xt=None, wts=None):
         self.s = s
         self.t = t
         self.x = x
+        self.wts = wts
+        if xs is None:
+            self.xs = np.ones(len(s))*max(s)
+        else:
+            self.xs = xs
+        if xt is None:
+            self.xt = np.ones(len(t))*max(t)
+        else:
+            self.xt = xt
         self.lmb = len(self.t)/sum(self.t)
         self.mu = len(self.s)/sum(self.s)
         self.u = len(self.s)/(len(self.t)+len(self.s))
@@ -72,49 +81,28 @@ class ExpMix():
     def samples(self, n_samples, censor):
         return ExpMix.samples_(self.mu, self.lmb, self.u\
                              ,n_samples, censor)
+
+    @staticmethod
+    def estimate_em_(s,t,x,xs,xt,verbose=False):
+        ns=len(s); nt=len(t);
+        mu=len(s)/sum(s); lmb=len(t)/sum(t)
+        mu_prev = mu
+        for tt in range(500):
+            lmb_sur = np.mean(np.exp(-lmb*xt))
+            mu_sur = np.mean(np.exp(-mu*xs))
+            u = ns*(1-lmb_sur)/(ns*(1-lmb_sur)+nt*(1-mu_sur))
+            tau = u*np.exp(-mu*x)/(u*np.exp(-mu*x)+(1-u)*np.exp(-lmb*x))
+            mu = len(s)/(sum(s)+sum(tau*x))
+            lmb = len(t)/(sum(t)+sum((1-tau)*x))
+            if verbose and tt%100 == 0:
+                print("mu:" + str(mu) + ", lmb:"+str(lmb)+", u:"+str(u))
+            if(abs(mu_prev-mu)<1e-3):
+                break
+            mu_prev = mu
+        return mu, lmb, u
     
-    
-
-def tst_em(mu_o=1/10, lmb_o=1/5, u_o=0.8, c=8):
-    #mu_o=1/10; lmb_o=1/10; u_o=0.3; c=8
-    #tau_o = u_o*np.exp(-mu_o*c)/(u_o*np.exp(-mu_o*c)+(1-u_o)*np.exp(-lmb_o*c))
-    s, t, x, xs, xt = ExpMix.samples_(mu_o,lmb_o,u_o,50000,c)
-    em = ExpMix(s,t,x)
-    #mu_est = len(s)/(sum(s)+sum(tau_o*x))
-    #lmb_est = len(t)/(sum(t)+sum((1-tau_o)*x))
-
-    #print(str(mu_o)+","+str(mu_est))
-    #print(str(lmb_o)+","+str(lmb_est))
-    ns=len(s); nt=len(t); nx=len(x)
-
-    #u_est = ns*(1-np.exp(-lmb_o*c))/(ns*(1-np.exp(-lmb_o*c))+nt*(1-np.exp(-mu_o*c)))
-    #print(str(u_o)+","+str(u_est))    
-
-    lmb=0.2; mu=0.9
-    for tt in range(500):
-        lmb_sur = np.mean(np.exp(-lmb*xt))
-        mu_sur = np.mean(np.exp(-mu*xs))
-        u = ns*(1-lmb_sur)/(ns*(1-lmb_sur)+nt*(1-mu_sur))
-        ## The actual probability of seeing sample beyong censor pt from sample-1.
-        tau = u*np.exp(-mu*x)/(u*np.exp(-mu*x)+(1-u)*np.exp(-lmb*x))
-        ## Use tau to estimate the rate parameters.
-        mu = len(s)/(sum(s)+sum(tau*x))
-        lmb = len(t)/(sum(t)+sum((1-tau)*x))
-        if tt%100 == 0:
-            print("mu:" + str(mu) + ", lmb:"+str(lmb)+", u:"+str(u))
-
-
-if __name__ == '__main__':
-    mu = 1/10; lmb=1/5; u=0.5;
-    s,t,x = ExpMix.samples_(mu,lmb,u,50000,8)
-    em = ExpMix(s,t,x)
-    grd = em.grad(mu,lmb,u)
-    mu_est = len(s)/(sum(s) + u*sum(x))
-    lmb_est = len(t)/(sum(t) + (1-u)*sum(x))
-    print(mu-mu_est)
-    print(lmb-lmb_est)
-    print(grd)
-
-
+    def estimate_em(self,verbose=False):
+        self.mu, self.lmb, self.u = self.estimate_em_(self.s,\
+                            self.t, self.x, self.xs, self.xt, verbose)
 
 

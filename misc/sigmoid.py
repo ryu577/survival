@@ -11,3 +11,7 @@ class Sigmoid():
         p = self.transformed(x)/self.upper_bound
         return self.upper_bound*p*(1-p)
 
+    @staticmethod
+    def transform(x, u):
+        return u/(1+np.exp(-x))
+
