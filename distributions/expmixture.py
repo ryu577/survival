@@ -66,7 +66,7 @@ class ExpMix():
                              ,n_samples, censor)
 
 def tst_em():
-    mu_o=1/10; lmb_o=1/5; u_o=0.3; c=8
+    mu_o=1/10; lmb_o=1/5; u_o=0.8; c=7
     tau_o = u_o*np.exp(-mu_o*c)/(u_o*np.exp(-mu_o*c)+(1-u_o)*np.exp(-lmb_o*c))
     s,t,x = ExpMix.samples_(mu_o,lmb_o,u_o,50000,c)
     em = ExpMix(s,t,x)
