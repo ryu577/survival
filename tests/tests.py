@@ -35,7 +35,7 @@ def tst_lomax():
     start = time.time()
     params = Lomax.est_params(t)
     end = time.time()
-    print("Estimating parameters of Weibull took: " + str(end-start))
+    print("Estimating parameters of Lomax took: " + str(end-start))
     return abs(params[0]-1.1) < 1e-1
 
 def tst_loglogistic():

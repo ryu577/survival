@@ -122,3 +122,21 @@ class ExpMix():
                             self.wt, self.ws, self.wx, verbose)
 
 
+from distributions.Lomax import Lomax
+
+def lomax_mix():
+    k1 = 1.1; lmb1 = 20
+    k2 = 0.1; lmb1 = 30
+    n_samples = 10000; u=0.3
+    censor = 8.0
+
+    t_len = int(n_samples*(1-u))
+    s_len = int(n_samples*u)
+    t_samples = Lomax.samples_(k1, lmb1, size=t_len)
+    s_samples = Lomax.samples_(k2, lmb2, size=s_len)
+    t = t_samples[t_samples<censor]
+    s = s_samples[s_samples<censor]
+    x_censored = np.ones(sum(t_samples>censor)+sum(s_samples>censor))
+
+
+

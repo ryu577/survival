@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.stats import lomax
 from distributions.basemodel import *
-
+from optimization.optimizn import bisection
 
 class Lomax(Base):
     '''
@@ -326,26 +326,38 @@ class Lomax(Base):
         return lomax.rvs(c=k, scale=(1 / lmb), size=size)
 
     @staticmethod
-    def kappafn_k(t, x, lmb=0.1):
-        n = len(t)
-        return n / (sum(np.log(1 + lmb * t)) + sum(np.log(1 + lmb * x)))
+    def kappafn_k(t, x, wt=None, wx=None, lmb=0.1):
+        """
+        See [1]
+        """
+        if wt is None:
+            wt = np.ones(len(t))
+            wx = np.ones(len(x))
+        n = sum(wt)
+        return n / (sum(wt*np.log(1 + lmb * t)) + sum(wx*np.log(1 + lmb * x)))
 
     @staticmethod
-    def kappafn_lmb(t, x, lmb=0.1):
-        n = len(t)
-        return (n / lmb - sum(t / (1 + lmb * t))) /\
-             (sum(t / (1 + lmb * t)) + sum(x / (1 + lmb * x)))
+    def kappafn_lmb(t, x, wt=None, wx=None, lmb=0.1):
+        """
+        See [1]
+        """
+        if wt is None:
+            wt = np.ones(len(t))
+            wx = np.ones(len(x))
+        n = sum(wt)
+        return (n / lmb - sum(t*wt / (1 + lmb * t))) /\
+             (sum(t*wt / (1 + lmb * t)) + sum(x*wx / (1 + lmb * x)))
 
     @staticmethod
-    def bisection_fn(lmb, t, x=np.array([])):
-        return Lomax.kappafn_k(t, x, lmb) \
-            - Lomax.kappafn_lmb(t, x, lmb)
+    def bisection_fn(lmb, t, x=np.array([]), wt=None, wx=None):
+        return Lomax.kappafn_k(t, x, wt, wx, lmb) \
+            - Lomax.kappafn_lmb(t, x, wt, wx, lmb)
 
     @staticmethod
-    def est_params(t, x=np.array([])):
-        fn = lambda lmb: Lomax.bisection_fn(lmb, t, x)
+    def est_params(t, x=np.array([]), wt=None, wx=None):
+        fn = lambda lmb: Lomax.bisection_fn(lmb, t, x, wt, wx)
         lmb = bisection(fn, 0.1, 100)
         k = Lomax.kappafn_lmb(t, x, lmb)
         return k, lmb
 
-
+#[1] https://onedrive.live.com/view.aspx?resid=7CAD132A61933826%216310&id=documents&wd=target%28Math%2FSurvival.one%7C33EFE553-AA82-43B5-AD47-9900633D2A1E%2FLomax%20Wts%7C0902ADB4-A003-4CFF-98E4-95870B6E7759%2F%29onenote:https://d.docs.live.net/7cad132a61933826/Documents/Topics/Math/Survival.one#Lomax%20Wts&section-id={33EFE553-AA82-43B5-AD47-9900633D2A1E}&page-id={0902ADB4-A003-4CFF-98E4-95870B6E7759}&end
