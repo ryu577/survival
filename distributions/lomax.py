@@ -277,19 +277,24 @@ class Lomax(Base):
             lmb: The scale parameter of the current Lomax.
             intervention_cost: The cost of intervening.
         '''
-        return 1 / lmb / (k - 1) - (1 / lmb / (k - 1) + tau * k / (k - 1)) * 1 / (1 + lmb * tau)**k + (tau + intervention_cost) * 1 / (1 + lmb * tau)**k
+        return 1 / lmb / (k - 1) - (1 / lmb / (k - 1) \
+            + tau * k / (k - 1)) * 1 / (1 + lmb * tau)**k \
+            + (tau + intervention_cost) * 1 / (1 + lmb * tau)**k
 
     @staticmethod
     def expectedDT_s(tau, k, lmb, intervention_cost):
         '''
-        The expected downtime incurred when the waiting threshold is set to an arbitrary value (static version).
+        The expected downtime incurred when the waiting threshold is 
+        set to an arbitrary value (static version).
         args:
             tau: The value we should set for the intervention threshold.
             k: The shape parameter of the current Lomax.
             lmb: The scale parameter of the current Lomax.
             intervention_cost: The cost of intervening.
         '''
-        return 1 / lmb / (k - 1) - (1 / lmb / (k - 1) + tau * k / (k - 1)) * 1 / (1 + lmb * tau)**k + (tau + intervention_cost) * 1 / (1 + lmb * tau)**k
+        return 1 / lmb / (k - 1) - (1 / lmb / (k - 1) \
+            + tau * k / (k - 1)) * 1 / (1 + lmb * tau)**k \
+            + (tau + intervention_cost) * 1 / (1 + lmb * tau)**k
 
     def expectedT(self, tau, k=None, lmb=None, params=None):
         '''
@@ -301,7 +306,8 @@ class Lomax(Base):
             params: A 2-d array with shape and scale parameters.
         '''
         [k, lmb] = self.determine_params(k, lmb, params)
-        return (1 / lmb / (k - 1) - (1 / lmb / (k - 1) + tau * k / (k - 1)) * 1 / (1 + lmb * tau)**k) / (1 - 1 / (1 + lmb * tau)**k)
+        return (1 / lmb / (k - 1) - (1 / lmb / (k - 1) \
+            + tau * k / (k - 1)) * 1 / (1 + lmb * tau)**k) / (1 - 1 / (1 + lmb * tau)**k)
 
     def samples(self, k=None, lmb=None, size=1000, params=None):
         '''
@@ -316,28 +322,30 @@ class Lomax(Base):
         return lomax.rvs(c=k, scale=(1 / lmb), size=size)
 
     @staticmethod
-    def samples_s(k, lmb, size=1000):
+    def samples_(k, lmb, size=1000):
         return lomax.rvs(c=k, scale=(1 / lmb), size=size)
 
-    def kappafn_k(self, t, x, lmb=0.1):
+    @staticmethod
+    def kappafn_k(t, x, lmb=0.1):
         n = len(t)
         return n / (sum(np.log(1 + lmb * t)) + sum(np.log(1 + lmb * x)))
 
-    def kappafn_lmb(self, t, x, lmb=0.1):
+    @staticmethod
+    def kappafn_lmb(t, x, lmb=0.1):
         n = len(t)
-        return (n / lmb - sum(t / (1 + lmb * t))) / (sum(t / (1 + lmb * t)) + sum(x / (1 + lmb * x)))
+        return (n / lmb - sum(t / (1 + lmb * t))) /\
+             (sum(t / (1 + lmb * t)) + sum(x / (1 + lmb * x)))
 
-    def bisection_fn(self, lmb=0.1):
-        return self.kappafn_k(self.train_org, self.train_inorg, lmb) - self.kappafn_lmb(self.train_org, self.train_inorg, lmb)
+    @staticmethod
+    def bisection_fn(lmb, t, x=np.array([])):
+        return Lomax.kappafn_k(t, x, lmb) \
+            - Lomax.kappafn_lmb(t, x, lmb)
 
-    def bisection(self, a=1e-6, b=2000):
-        n = 1
-        while n < 10000:
-            c = (a + b) / 2
-            if self.bisection_fn(c) == 0 or (b - a) / 2 < 1e-6:
-                return c
-            n = n + 1
-            if (self.bisection_fn(c) > 0) == (self.bisection_fn(a) > 0):
-                a = c
-            else:
-                b = c
+    @staticmethod
+    def est_params(t, x=np.array([])):
+        fn = lambda lmb: Lomax.bisection_fn(lmb, t, x)
+        lmb = bisection(fn, 0.1, 100)
+        k = Lomax.kappafn_lmb(t, x, lmb)
+        return k, lmb
+
+
