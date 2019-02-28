@@ -115,14 +115,14 @@ class ExpMix():
                 break
             mu_prev = mu
         return mu, lmb, u
-    
+
     def estimate_em(self,verbose=False):
         self.mu, self.lmb, self.u = self.estimate_em_(self.s,\
                             self.t, self.x, self.xs, self.xt, 
-                            self.wt, self.ws, self.wx, verbose)
+                            self.ws, self.wt, self.wx, verbose)
 
 
-from distributions.Lomax import Lomax
+from distributions.lomax import Lomax
 
 def lomax_mix():
     k1 = 1.1; lmb1 = 20
