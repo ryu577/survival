@@ -1,11 +1,22 @@
 import numpy as np
 
 class ExpMix():
-    def __init__(self, s, t, x, xs=None, xt=None, wts=None):
+    def __init__(self, s, t, x, xs=None, xt=None, ws=None, wt=None, wx=None):
         self.s = s
         self.t = t
         self.x = x
-        self.wts = wts
+        if ws is None:
+            self.ws = np.ones(len(s))
+        else:
+            self.ws = ws
+        if wt is None:
+            self.wt = np.ones(len(t))
+        else:
+            self.wt = wt
+        if wx is None:
+            self.wx = np.ones(len(x))
+        else:
+            self.wx = wx
         if xs is None:
             self.xs = np.ones(len(s))*max(s)
         else:
@@ -83,26 +94,49 @@ class ExpMix():
                              ,n_samples, censor)
 
     @staticmethod
-    def estimate_em_(s,t,x,xs,xt,verbose=False):
-        ns=len(s); nt=len(t);
-        mu=len(s)/sum(s); lmb=len(t)/sum(t)
+    def estimate_em_(s,t,x,xs,xt,ws=None,wt=None,wx=None,verbose=False):
+        if ws is None:
+            ws=np.ones(len(s)); wt=np.ones(len(t)); wx=np.ones(len(x))
+        #ns=len(s); nt=len(t);
+        ns=sum(ws); nt=sum(wt);
+        #mu=len(s)/sum(s); lmb=len(t)/sum(t)
+        mu=sum(ws)/sum(ws*s); lmb=sum(wt)/sum(wt*t)
         mu_prev = mu
         for tt in range(500):
-            lmb_sur = np.mean(np.exp(-lmb*xt))
-            mu_sur = np.mean(np.exp(-mu*xs))
+            lmb_sur = np.mean(np.exp(-lmb*xt*wt))
+            mu_sur = np.mean(np.exp(-mu*xs*ws))
             u = ns*(1-lmb_sur)/(ns*(1-lmb_sur)+nt*(1-mu_sur))
-            tau = u*np.exp(-mu*x)/(u*np.exp(-mu*x)+(1-u)*np.exp(-lmb*x))
-            mu = len(s)/(sum(s)+sum(tau*x))
-            lmb = len(t)/(sum(t)+sum((1-tau)*x))
+            tau = u*np.exp(-mu*x*wx)/(u*np.exp(-mu*x*wx)+(1-u)*np.exp(-lmb*x*wx))
+            mu = sum(ws)/(sum(s*ws)+sum(tau*x*wx))
+            lmb = sum(wt)/(sum(t*wt)+sum((1-tau)*x*wx))
             if verbose and tt%100 == 0:
                 print("mu:" + str(mu) + ", lmb:"+str(lmb)+", u:"+str(u))
             if(abs(mu_prev-mu)<1e-3):
                 break
             mu_prev = mu
         return mu, lmb, u
-    
+
     def estimate_em(self,verbose=False):
         self.mu, self.lmb, self.u = self.estimate_em_(self.s,\
-                            self.t, self.x, self.xs, self.xt, verbose)
+                            self.t, self.x, self.xs, self.xt, 
+                            self.ws, self.wt, self.wx, verbose)
+
+
+from distributions.lomax import Lomax
+
+def lomax_mix():
+    k1 = 1.1; lmb1 = 20
+    k2 = 0.1; lmb1 = 30
+    n_samples = 10000; u=0.3
+    censor = 8.0
+
+    t_len = int(n_samples*(1-u))
+    s_len = int(n_samples*u)
+    t_samples = Lomax.samples_(k1, lmb1, size=t_len)
+    s_samples = Lomax.samples_(k2, lmb2, size=s_len)
+    t = t_samples[t_samples<censor]
+    s = s_samples[s_samples<censor]
+    x_censored = np.ones(sum(t_samples>censor)+sum(s_samples>censor))
+
 
 

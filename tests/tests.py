@@ -21,6 +21,9 @@ class TestDistributions(unittest.TestCase):
     def tst_expmix_em(self):
         self.assertTrue(tst_expmix_em())
 
+    def tst_expmix_em_weighted(self):
+        self.assertTrue(tst_expmix_em_weighted())
+
 
 def tst_weibull():
     t = Weibull.samples_(1.1, 200, size=10000)
@@ -35,7 +38,7 @@ def tst_lomax():
     start = time.time()
     params = Lomax.est_params(t)
     end = time.time()
-    print("Estimating parameters of Weibull took: " + str(end-start))
+    print("Estimating parameters of Lomax took: " + str(end-start))
     return abs(params[0]-1.1) < 1e-1
 
 def tst_loglogistic():
@@ -51,6 +54,17 @@ def tst_expmix_em(mu_o=1/10, lmb_o=1/5, u_o=0.8, c=8):
     em = ExpMix(s, t, x, xs, xt)
     em.estimate_em(verbose=True)
     return abs(em.mu-mu_o) < 1e-2
+
+def tst_expmix_em_weighted(mu_o=1/10, lmb_o=1/5, u_o=0.8, c=8):
+    """
+    Weighing all vectors by the same amount shouldn't change the estimate.
+    """
+    s, t, x, xs, xt = ExpMix.samples_(mu_o,lmb_o,u_o,50000,c)
+    ws = np.ones(len(s))*4; wt = np.ones(len(t))*4; wx = np.ones(len(x))*4
+    em = ExpMix(s, t, x, xs, xt, ws, wt, wx)
+    em.estimate_em(verbose=True)
+    return abs(em.mu-mu_o) < 1e-2
+
 
 def tst_expmix_em_raw(mu_o=1/10, lmb_o=1/5, u_o=0.8, c=8):
     s, t, x, xs, xt = ExpMix.samples_(mu_o,lmb_o,u_o,50000,c)
