@@ -111,7 +111,7 @@ class ExpMix():
             lmb = sum(wt)/(sum(t*wt)+sum((1-tau)*x*wx))
             if verbose and tt%100 == 0:
                 print("mu:" + str(mu) + ", lmb:"+str(lmb)+", u:"+str(u))
-            if(abs(mu_prev-mu)<1e-3):
+            if(abs(mu_prev-mu)/mu_prev<1e-4):
                 break
             mu_prev = mu
         return mu, lmb, u
