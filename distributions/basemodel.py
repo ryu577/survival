@@ -192,10 +192,7 @@ class Base(object):
         args:
             numIter: The number of iterations gradient descent should run for.
             params: The starting parameters where it starts.
-            verbose: To print progress in iterations or not.
-            gamma: In case of L2 regularization, the strength of the regularizer. 
-                   Zero by default.
-            params0: The parameters the L2 regularization should stay close to.
+            verbose: To print progress in iterations or not.            
             step_lengths: The step lengths along the gradient the algorithm should check 
                           and make the step with the best improvement in objective function.
         '''
