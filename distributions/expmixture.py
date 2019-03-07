@@ -106,7 +106,8 @@ class ExpMix():
             lmb_sur = np.mean(np.exp(-lmb*xt*wt))
             mu_sur = np.mean(np.exp(-mu*xs*ws))
             u = ns*(1-lmb_sur)/(ns*(1-lmb_sur)+nt*(1-mu_sur))
-            tau = u*np.exp(-mu*x*wx)/(u*np.exp(-mu*x*wx)+(1-u)*np.exp(-lmb*x*wx))
+            tau = u*np.exp(-mu*x*wx)/(u*np.exp(-mu*x*wx)+\
+                    (1-u)*np.exp(-lmb*x*wx))
             mu = sum(ws)/(sum(s*ws)+sum(tau*x*wx))
             lmb = sum(wt)/(sum(t*wt)+sum((1-tau)*x*wx))
             if verbose and tt%100 == 0:
@@ -137,6 +138,5 @@ def lomax_mix():
     t = t_samples[t_samples<censor]
     s = s_samples[s_samples<censor]
     x_censored = np.ones(sum(t_samples>censor)+sum(s_samples>censor))
-
 
 

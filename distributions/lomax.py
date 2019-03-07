@@ -10,7 +10,7 @@ class Lomax(Base):
     with this class.
     '''
 
-    def __init__(self, k=None, lmb=None, ti=None, xi=None):
+    def __init__(self, ti=None, xi=None, k=None, lmb=None):
         '''
         Instantiate a Lomax distribution.
         args:
@@ -349,15 +349,15 @@ class Lomax(Base):
              (sum(t*wt / (1 + lmb * t)) + sum(x*wx / (1 + lmb * x)))
 
     @staticmethod
-    def bisection_fn(lmb, t, x=np.array([]), wt=None, wx=None):
+    def bisection_fn(t, x=np.array([]), wt=None, wx=None, lmb=0.1):
         return Lomax.kappafn_k(t, x, wt, wx, lmb) \
             - Lomax.kappafn_lmb(t, x, wt, wx, lmb)
 
     @staticmethod
     def est_params(t, x=np.array([]), wt=None, wx=None):
-        fn = lambda lmb: Lomax.bisection_fn(lmb, t, x, wt, wx)
+        fn = lambda lmb: Lomax.bisection_fn(t, x, wt, wx, lmb)
         lmb = bisection(fn, 0.1, 100)
-        k = Lomax.kappafn_lmb(t, x, lmb)
+        k = Lomax.kappafn_lmb(t, x, wt, wx, lmb)
         return k, lmb
 
 #[1] https://onedrive.live.com/view.aspx?resid=7CAD132A61933826%216310&id=documents&wd=target%28Math%2FSurvival.one%7C33EFE553-AA82-43B5-AD47-9900633D2A1E%2FLomax%20Wts%7C0902ADB4-A003-4CFF-98E4-95870B6E7759%2F%29onenote:https://d.docs.live.net/7cad132a61933826/Documents/Topics/Math/Survival.one#Lomax%20Wts&section-id={33EFE553-AA82-43B5-AD47-9900633D2A1E}&page-id={0902ADB4-A003-4CFF-98E4-95870B6E7759}&end

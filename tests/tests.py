@@ -83,3 +83,78 @@ def tst_expmix_em_raw(mu_o=1/10, lmb_o=1/5, u_o=0.8, c=8):
             print("mu:" + str(mu) + ", lmb:"+str(lmb)+", u:"+str(u))
 
 
+def tst_expct_dt_slopes():
+    sam = LogLogistic.samples_(1.1,10)
+    ll=LogLogistic(sam,np.array([.01]))
+    coefs = ll.expctd_downtime_linear_coeffs(1,3,10)
+    
+
+sampl1 = LogLogistic.samples_(12.0,0.8)
+sampl2 = LogLogistic.samples_(8.0,1.1)
+ti = np.concatenate((sampl1,sampl2),axis=0)
+xi = np.array([.1])
+
+ll = LogLogistic(ti,xi)
+lmx = Lomax.est_params(ti)
+wbl = Weibull.est_params(ti)
+
+import pandas as pd
+
+train_df = pd.DataFrame()
+##Training.
+for i in range(100):
+    k = np.random.uniform()*2.0
+    lmb = np.random.uniform()*20.0
+    ti = LogLogistic.samples_(lmb,k)
+    lmx = Lomax.est_params(ti)
+    wbl = Weibull.est_params(ti)
+    train_df = train_df.append({'alpha':lmb,'beta':k,\
+                    'lomax_k':lmx[0],'lomax_lmb':lmx[1],
+                    'weib_k':wbl[0],'weib_lmb':wbl[1]},
+                    ignore_index=True)
+
+train_df["weib_lmb"][np.isinf(train_df["weib_lmb"])] = 1000.0
+train_df["weib_lmb"][train_df["weib_lmb"]>1000.0] = 1000.0
+
+train_df["lomax_k"][np.isnan(train_df["lomax_k"])]=10.0
+
+x_features = np.ones((len(train_df),15))
+x_features[:,1] = train_df["lomax_k"]
+x_features[:,2] = train_df["lomax_lmb"]
+x_features[:,3] = train_df["weib_k"]
+x_features[:,4] = train_df["weib_lmb"]
+x_features[:,5] = train_df["weib_k"]**2
+x_features[:,6] = train_df["weib_lmb"]**2
+x_features[:,7] = train_df["lomax_k"]**2
+x_features[:,8] = train_df["lomax_lmb"]**2
+x_features[:,9] = train_df["lomax_k"]*train_df["lomax_lmb"]
+x_features[:,10] = train_df["lomax_k"]*train_df["weib_k"]
+x_features[:,11] = train_df["lomax_k"]*train_df["weib_lmb"]
+x_features[:,12] = train_df["lomax_lmb"]*train_df["weib_k"]
+x_features[:,13] = train_df["lomax_lmb"]*train_df["weib_lmb"]
+x_features[:,14] = train_df["weib_k"]*train_df["weib_lmb"]
+
+def predicn(trm="alpha"):
+    y_alp = train_df[trm]
+    X = x_features
+    lhs = np.dot(X.T,X)
+    rhs = np.dot(X.T,y_alp)
+    betas = np.linalg.solve(lhs,rhs)
+    y_pred = np.dot(X,betas)
+    return y_pred, lin_betas
+
+y_alp, lin_betas = predicn()
+y_beta, lin_betas = predicn("beta")
+
+res_df = pd.DataFrame()
+for i in range(100):
+    res_df = res_df.append({'actual_alpha':y[i],'pred_alpha':y_alp[i],
+                    'actual_beta':train_df["beta"][i], 'pred_beta':y_beta[i],
+                    'weib_k':train_df["weib_k"][i], 'weib_lmb':train_df['weib_lmb'][i],
+                    'lomax_k':train_df["lomax_k"][i], 'lomax_lmb':train_df['lomax_lmb'][i]},
+                    ignore_index=True)
+
+bad_df = res_df[abs(res_df["actual_alpha"]-res_df["pred_alpha"])>3.0]
+good_df = res_df[abs(res_df["actual_alpha"]-res_df["pred_alpha"])<3.0]
+
+
