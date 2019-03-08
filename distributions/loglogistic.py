@@ -12,8 +12,7 @@ class LogLogistic(Base):
     the instance of this distribution will have alpha=k always
     and beta=lmb always.
     '''
-
-    def __init__(self, ti=None, xi=None, alp=1, beta=0.5, 
+    def __init__(self, ti=None, xi=None, alp=1, beta=0.5,
                  params=np.array([1.1, 1.1]),
                  w_org=None, w_inorg=None, verbose=False,
                  step_lengths=np.array([1e-8,1e-5, 1e-3,1e-2])):
@@ -33,13 +32,15 @@ class LogLogistic(Base):
                 self.w_inorg = np.ones(len(xi))
             else:
                 self.w_inorg = w_inorg
-            self.gradient_descent(params=params, verbose=verbose, 
+            self.gradient_descent(params=params, verbose=verbose,
                             step_lengths=step_lengths)
         else:
             self.train = []
             self.test = []
-            self.train_org = []
-            self.train_inorg = []
+            self.train_org = self.samples_(alp,beta)
+            self.train_inorg = np.array([.01])
+            self.w_org = np.ones(len(self.train_org))
+            self.w_inorg = np.ones(len(self.train_org))
             self.alpha = self.lmb = alp
             self.beta = self.k = beta
             self.params = []
@@ -76,7 +77,8 @@ class LogLogistic(Base):
             beta: The scale parameter.
         '''
         [beta, alpha] = self.determine_params(beta, alpha, None)
-        return (beta / alpha) * (x / alpha)**(beta - 1) / (1 + (x / alpha)**beta)**2
+        return (beta / alpha) * (x / alpha)**(beta - 1) / \
+                (1 + (x / alpha)**beta)**2
 
     def cdf(self, x, alpha=None, beta=None):
         '''
@@ -205,10 +207,10 @@ class LogLogistic(Base):
             m = len(x)
             delalp = -n * beta / alp + 2 * beta / alp**(beta + 1) *\
              sum(t**beta / (1 + (t / alp)**beta)) \
-                + beta / alp**(beta + 1) * sum(x**beta / (1 + (x / alp)**beta))
+                + beta / alp**(beta + 1) * sum(x**beta / (1 + (x/alp)**beta))
             delbeta = n / beta - n * np.log(alp) + \
-                sum(np.log(t)) - 2 * sum((t / alp)**beta / (1 + (t / alp)**beta) * np.log(t / alp)) \
-                - sum((x / alp)**beta / (1 + (x / alp)**beta) * np.log(x / alp))
+                sum(np.log(t)) - 2 * sum((t/alp)**beta / (1 + (t/alp)**beta) * np.log(t/alp)) \
+                - sum((x / alp)**beta / (1 + (x / alp)**beta) * np.log(x/alp))
         return np.array([delalp, delbeta])
 
     def hessian(self, t, x, k=0.5, lmb=0.3):

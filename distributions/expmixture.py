@@ -120,7 +120,7 @@ class ExpMix():
     def estimate_em(self,verbose=False):
         self.mu, self.lmb, self.u = self.estimate_em_(self.s,\
                             self.t, self.x, self.xs, self.xt, 
-                            self.ws, self.wt, self.wx, verbose)
+                            self.ws, self.wt, self.wx, verbose)    
 
 
 from distributions.lomax import Lomax

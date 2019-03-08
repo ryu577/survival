@@ -60,8 +60,10 @@ class Base(object):
         return lowterm + highterm
 
     def expctd_downtime_linear_coeffs(self, tau1, tau2, y):
-        integ_dt = integrate.quad(lambda t:self.expct_downtime(t, y), tau1, tau2)[0]
-        integ_tdt = integrate.quad(lambda t:t*self.expct_downtime(t, y), tau1, tau2)[0]
+        integ_dt = integrate.quad(lambda t:self.expct_downtime(t, y),\
+                        tau1, tau2)[0]
+        integ_tdt = integrate.quad(lambda t:t*self.expct_downtime(t, y),\
+                        tau1, tau2)[0]
         a = (2*integ_tdt-(tau1+tau2)*integ_dt)/(0.6667*(tau2**3-tau1**3)-\
                 0.5*(tau2**2-tau1**2)*(tau2+tau1))
         b = integ_dt/(tau2-tau1) - a*(tau2+tau1)/2
