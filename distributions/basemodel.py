@@ -71,7 +71,8 @@ class Base(object):
         '''
         The probability that the current distribution is greater than t0.
         '''
-        return lmb * ((xs > t0) * (self.survival(t0) - self.survival(xs)) + (xs > (t0 - Y)) * self.survival(xs))
+        return lmb * ((xs > t0) * (self.survival(t0) - self.survival(xs)) + (xs > (t0 - Y)) \
+                * self.survival(xs))
 
     def expected_t(self, tau, k=None, lmb=None, params=None):
         '''
@@ -84,7 +85,8 @@ class Base(object):
         [k, lmb] = self.determine_params(k, lmb, params)
         return self.expectedXBwLts(0, tau, k, lmb)
 
-    def plt_downtime(self, xs=np.arange(1, 100000) * 0.01, lmb=0, alp=1, lmb_prob=0, t0=900.0, Y=480.0, reg='log', col='b'):
+    def plt_downtime(self, xs=np.arange(1, 100000) * 0.01, 
+            lmb=0, alp=1, lmb_prob=0, t0=900.0, Y=480.0, reg='log', col='b'):
         '''
         Old function carried over for continuity. Not in active use.
         Plots the downtime (average time spent in undesirable states) with the intervention threshold.

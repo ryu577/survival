@@ -229,6 +229,6 @@ class LogLogistic(Base):
 
 
 
-def ll_haz_rate(alpha, beta, t):
-    return (beta / alpha) * (t / alpha)**(beta - 1) / (1 + (t / alpha)**beta)
+#def ll_haz_rate(alpha, beta, t):
+#    return (beta / alpha) * (t / alpha)**(beta - 1) / (1 + (t / alpha)**beta)
 
