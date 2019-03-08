@@ -223,12 +223,12 @@ class LogLogistic(Base):
         '''
         return self.numerical_hessian(t, x, k, lmb)
 
-    @staticmethod    
+    @staticmethod
     def ll_haz_rate(alpha, beta, t):
         return (beta/alpha)*(t/alpha)**(beta-1)/(1+(t/alpha)**beta)
 
+    def hazard(self, t):
+        return self.ll_haz_rate(self.alpha, self.beta, t)
 
 
-def ll_haz_rate(alpha, beta, t):
-    return (beta / alpha) * (t / alpha)**(beta - 1) / (1 + (t / alpha)**beta)
 
