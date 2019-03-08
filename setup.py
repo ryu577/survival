@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
  
 setup(name='survival',
-      version='0.0.4',
+      version='0.0.5',
       url='https://github.com/ryu577/survival',
       license='MIT',
       author='Rohit Pandey',
