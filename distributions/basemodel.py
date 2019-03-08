@@ -33,15 +33,19 @@ class Base(object):
         prob = self.cdf(t2, k, lmb) - (self.cdf(t1, k, lmb) if t1 > 0 else 0)
         return ress[0] / prob
 
-    def expctd_downtime(self, y, xs=np.arange(1, 100000) * 0.01, lmb=0, reg='log'):
+    def expctd_downtime_range(self, y, xs=np.arange(1, 100000) * 0.01, \
+                            lmb=0, reg=None):
         '''
         Legacy method.
-        Combines the expected downtime when the recovery happens before 
+        Combines the expected downtime when the recovery happens before
         and after the wait threshold.
         '''
-        highterms = self.survival(xs) * (xs + y)
-        lowterms = self.Ex_x_le_y(xs)
+        highterms = self.survival(xs)*(xs + y)
+        lowterms = self.expctd_x_given_x_le_y(xs)
+        #lowterms = integrate.quad(lambda x: x*self.pdf(x),0,xs)[0]
         et = lowterms + highterms
+        if reg is None:
+            return et
         if reg == 'log':
             et += lmb * np.log(xs)
         elif reg == 'sqrt':
@@ -50,12 +54,26 @@ class Base(object):
             et += lmb * xs**2
         return et
 
+    def expct_downtime(self, tau, y):
+        highterm = self.survival(tau)*(tau + y)
+        lowterm = integrate.quad(lambda t: t*self.pdf(t),0,tau)[0]
+        return lowterm + highterm
+
+    def expctd_downtime_linear_coeffs(self, tau1, tau2, y):
+        integ_dt = integrate.quad(lambda t:self.expct_downtime(t, y), tau1, tau2)[0]
+        integ_tdt = integrate.quad(lambda t:t*self.expct_downtime(t, y), tau1, tau2)[0]
+        a = (2*integ_tdt-(tau1+tau2)*integ_dt)/(0.6667*(tau2**3-tau1**3)-\
+                0.5*(tau2**2-tau1**2)*(tau2+tau1))
+        b = integ_dt/(tau2-tau1) - a*(tau2+tau1)/2
+        return a, b
+
     def hazard(self, t):
         return self.pdf(t) / self.survival(t)
 
     def determine_params(self, k=-1, lmb=-1, params=None):
         '''
-        Sets the shape and scale parameters of the distribution instance.
+        Sets the shape and scale parameters of the 
+        distribution instance.
         '''
         if params is not None:
             k = params[0]
@@ -296,3 +314,4 @@ class Base(object):
                 [100, 100, 0]  # these values are arbitrary but don't matter.
             ])
         return (np.matrix(probs), np.matrix(times))
+    
