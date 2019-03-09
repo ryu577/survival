@@ -1,7 +1,9 @@
 import numpy as np
 from misc.sigmoid import *
 from distributions.basemodel import *
-
+from distributions.lomax import *
+from distributions.weibull import *
+import pandas as pd
 
 class LogLogistic(Base):
     '''
@@ -12,6 +14,16 @@ class LogLogistic(Base):
     the instance of this distribution will have alpha=k always
     and beta=lmb always.
     '''
+    lin_alphas = np.array([ -2.52772215e+00,  -2.65188344e+00,  -1.04822376e-01,
+                                    1.30662288e+01,   2.41382642e-01,   6.66425463e-03,
+                                    -4.77346745e-04,   2.54565486e-01,   5.85225529e-04,
+                                    -4.26451352e-01,  -2.85319115e-01,   3.00439683e-02,
+                                    -2.59997264e-02,   2.70681101e-03,  -1.12247885e-02])
+    lin_betas = np.array([ -1.50974077e-02,   8.57431339e-02,   1.15325271e-03,
+                                    1.80669587e+00,   1.73089858e-04,  -8.17185130e-05,
+                                    -1.02613704e-07,  -5.69980568e-03,   5.46670938e-06,
+                                    -1.33985957e-02,  -4.05188576e-03,   1.20595620e-03,
+                                    9.47605555e-06,  -1.73386464e-06,  -1.79663515e-03])
 
     def __init__(self, ti=None, xi=None, alp=1, beta=0.5, 
                  params=np.array([1.1, 1.1]),
@@ -43,6 +55,17 @@ class LogLogistic(Base):
             self.alpha = self.lmb = alp
             self.beta = self.k = beta
             self.params = []
+        # Pre-computed linear regression coefficients for fast-logistic regression.
+        self.lin_alphas = np.array([ -2.52772215e+00,  -2.65188344e+00,  -1.04822376e-01,
+                                    1.30662288e+01,   2.41382642e-01,   6.66425463e-03,
+                                    -4.77346745e-04,   2.54565486e-01,   5.85225529e-04,
+                                    -4.26451352e-01,  -2.85319115e-01,   3.00439683e-02,
+                                    -2.59997264e-02,   2.70681101e-03,  -1.12247885e-02])
+        self.lin_betas = np.array([ -1.50974077e-02,   8.57431339e-02,   1.15325271e-03,
+                                    1.80669587e+00,   1.73089858e-04,  -8.17185130e-05,
+                                    -1.02613704e-07,  -5.69980568e-03,   5.46670938e-06,
+                                    -1.33985957e-02,  -4.05188576e-03,   1.20595620e-03,
+                                    9.47605555e-06,  -1.73386464e-06,  -1.79663515e-03])
 
     def set_params(self, alpha, beta, params=None):
         '''
@@ -98,7 +121,7 @@ class LogLogistic(Base):
             beta: The scale parameter.
         '''
         [beta, alpha] = self.determine_params(beta, alpha, None)
-        return alpha * (1 / u - 1)**(-1 / beta)
+        return LogLogistic.inv_cdf_(u, self.alpha, self.beta)
 
     @staticmethod
     def inv_cdf_(u, alpha, beta):
@@ -230,5 +253,78 @@ class LogLogistic(Base):
     def hazard(self, t):
         return self.ll_haz_rate(self.alpha, self.beta, t)
 
+    @staticmethod
+    def train_fast_():
+        '''
+        Fast LogLogistic estimation, based on inferring
+        coefficients using Lomax and Weibull coefficients.
+        '''
+        train_df = pd.DataFrame()
+        # Generate some training data at random.
+        for _ in range(100):
+            k = np.random.uniform()*2.0
+            lmb = np.random.uniform()*20.0
+            ti = LogLogistic.samples_(lmb,k)
+            lmx = Lomax.est_params(ti)
+            wbl = Weibull.est_params(ti)
+            train_df = train_df.append({'alpha':lmb,'beta':k,\
+                            'lomax_k':lmx[0],'lomax_lmb':lmx[1],
+                            'weib_k':wbl[0],'weib_lmb':wbl[1]},
+                            ignore_index=True)
+        train_df["weib_lmb"][np.isinf(train_df["weib_lmb"])] = 1000.0
+        train_df["weib_lmb"][train_df["weib_lmb"]>1000.0] = 1000.0
+        train_df["lomax_k"][np.isnan(train_df["lomax_k"])]=10.0
+        x_features = np.ones((len(train_df),15))
+        x_features[:,1] = train_df["lomax_k"]
+        x_features[:,2] = train_df["lomax_lmb"]
+        x_features[:,3] = train_df["weib_k"]
+        x_features[:,4] = train_df["weib_lmb"]
+        x_features[:,5] = train_df["weib_k"]**2
+        x_features[:,6] = train_df["weib_lmb"]**2
+        x_features[:,7] = train_df["lomax_k"]**2
+        x_features[:,8] = train_df["lomax_lmb"]**2
+        x_features[:,9] = train_df["lomax_k"]*train_df["lomax_lmb"]
+        x_features[:,10] = train_df["lomax_k"]*train_df["weib_k"]
+        x_features[:,11] = train_df["lomax_k"]*train_df["weib_lmb"]
+        x_features[:,12] = train_df["lomax_lmb"]*train_df["weib_k"]
+        x_features[:,13] = train_df["lomax_lmb"]*train_df["weib_lmb"]
+        x_features[:,14] = train_df["weib_k"]*train_df["weib_lmb"]
+        _, lin_alphas = predicn(train_df, x_features)
+        _, lin_betas = predicn(train_df, x_features, "beta")
+        return lin_alphas, lin_betas
+
+    def retrain_linregr_params(self):
+        self.lin_alphas, self.lin_betas = LogLogistic.train_fast_()
+
+    @staticmethod
+    def est_params_fast_(ti,xi,lin_alphas=None,lin_betas=None):
+        if lin_alphas is None:
+            lin_alphas = LogLogistic.lin_alphas
+        if lin_betas is None:
+            lin_betas = LogLogistic.lin_betas
+        ftrs = cnstrct_feature(ti, xi)
+        alpha = sum(ftrs*lin_alphas)
+        beta = sum(ftrs*lin_betas)
+        return alpha, beta
+
+
+def predicn(train_df, x_features, trm="alpha"):
+    y_alp = train_df[trm]
+    X = x_features
+    lhs = np.dot(X.T,X)
+    rhs = np.dot(X.T,y_alp)
+    betas = np.linalg.solve(lhs,rhs)
+    y_pred = np.dot(X,betas)
+    return y_pred, betas
+
+
+def cnstrct_feature(ti, xi=None):
+    lmx = Lomax.est_params(ti)
+    wbl = Weibull.est_params(ti)
+    x_features = np.array([1,lmx[0],lmx[1],wbl[0],wbl[1],
+                          wbl[0]**2,wbl[1]**2,lmx[0]**2,lmx[1]**2,
+                          lmx[0]*lmx[1],lmx[0]*wbl[0],lmx[0]*wbl[1],
+                          lmx[1]*wbl[0],lmx[1]*wbl[1],wbl[0]*wbl[1]])
+    return x_features
 
 

@@ -100,28 +100,20 @@ def tst_expct_dt_slopes():
     coefs2 = ll.expctd_downtime_linear_coeffs(opt_tau,opt_tau+15.0,3.0)
     return coefs2[0] >= 0
 
-def predicn(trm="alpha"):
-        y_alp = train_df[trm]
-        X = x_features
-        lhs = np.dot(X.T,X)
-        rhs = np.dot(X.T,y_alp)
-        betas = np.linalg.solve(lhs,rhs)
-        y_pred = np.dot(X,betas)
-        return y_pred, lin_betas
+
+def predicn(train_df, x_features, trm="alpha"):
+    y_alp = train_df[trm]
+    X = x_features
+    lhs = np.dot(X.T,X)
+    rhs = np.dot(X.T,y_alp)
+    betas = np.linalg.solve(lhs,rhs)
+    y_pred = np.dot(X,betas)
+    return y_pred, betas
 
 
 def fast_loglogistic():
-    sampl1 = LogLogistic.samples_(12.0,0.8)
-    sampl2 = LogLogistic.samples_(8.0,1.1)
-    ti = np.concatenate((sampl1,sampl2),axis=0)
-    xi = np.array([.1])
-
-    ll = LogLogistic(ti,xi)
-    lmx = Lomax.est_params(ti)
-    wbl = Weibull.est_params(ti)
-
     train_df = pd.DataFrame()
-    ##Training.
+    ##Training data set.
     for i in range(100):
         k = np.random.uniform()*2.0
         lmb = np.random.uniform()*20.0
@@ -150,11 +142,11 @@ def fast_loglogistic():
     x_features[:,12] = train_df["lomax_lmb"]*train_df["weib_k"]
     x_features[:,13] = train_df["lomax_lmb"]*train_df["weib_lmb"]
     x_features[:,14] = train_df["weib_k"]*train_df["weib_lmb"]
-    y_alp, lin_betas = predicn()
-    y_beta, lin_betas = predicn("beta")
+    y_alp, lin_alphas = predicn(train_df, x_features)
+    y_beta, lin_betas = predicn(train_df, x_features, "beta")
     res_df = pd.DataFrame()
     for i in range(100):
-        res_df = res_df.append({'actual_alpha':y[i],'pred_alpha':y_alp[i],
+        res_df = res_df.append({'actual_alpha':train_df["alpha"][i],'pred_alpha':y_alp[i],
                         'actual_beta':train_df["beta"][i], 'pred_beta':y_beta[i],
                         'weib_k':train_df["weib_k"][i], 'weib_lmb':train_df['weib_lmb'][i],
                         'lomax_k':train_df["lomax_k"][i], 'lomax_lmb':train_df['lomax_lmb'][i]},
@@ -162,4 +154,13 @@ def fast_loglogistic():
     bad_df = res_df[abs(res_df["actual_alpha"]-res_df["pred_alpha"])>3.0]
     good_df = res_df[abs(res_df["actual_alpha"]-res_df["pred_alpha"])<3.0]
 
+
+def tst_lomax_weibull():
+    sampl1 = LogLogistic.samples_(12.0,0.8)
+    sampl2 = LogLogistic.samples_(8.0,1.1)
+    ti = np.concatenate((sampl1,sampl2),axis=0)
+    xi = np.array([.1])
+    ll = LogLogistic(ti,xi)
+    lmx = Lomax.est_params(ti)
+    wbl = Weibull.est_params(ti)
 
