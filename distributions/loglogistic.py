@@ -207,7 +207,8 @@ class LogLogistic(Base):
              sum(t**beta / (1 + (t / alp)**beta)) \
                 + beta / alp**(beta + 1) * sum(x**beta / (1 + (x / alp)**beta))
             delbeta = n / beta - n * np.log(alp) + \
-                sum(np.log(t)) - 2 * sum((t / alp)**beta / (1 + (t / alp)**beta) * np.log(t / alp)) \
+                sum(np.log(t)) - 2 * sum((t / alp)**beta / \
+                    (1 + (t / alp)**beta) * np.log(t / alp)) \
                 - sum((x / alp)**beta / (1 + (x / alp)**beta) * np.log(x / alp))
         return np.array([delalp, delbeta])
 

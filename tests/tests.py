@@ -69,3 +69,17 @@ def tst_expmix_em_raw(mu_o=1/10, lmb_o=1/5, u_o=0.8, c=8):
             print("mu:" + str(mu) + ", lmb:"+str(lmb)+", u:"+str(u))
 
 
+sampl1 = LogLogistic.samples_(10,1.1)
+sampl2 = LogLogistic.samples_(8,0.8)
+
+ti = np.concatenate((sampl1,sampl2),axis=0)
+xi = np.array([.1])
+
+
+ll= LogLogistic(ti=ti, xi=xi, verbose=True)
+
+start = time.time()
+ll= LogLogistic(ti=ti, xi=xi, verbose=True)
+end = time.time()
+print("Estimating parameters of Weibull took: " + str(end-start))
+
