@@ -45,13 +45,15 @@ class LogLogistic(Base):
                 self.w_inorg = np.ones(len(xi))
             else:
                 self.w_inorg = w_inorg
-            self.gradient_descent(params=params, verbose=verbose, 
+            self.gradient_descent(params=params, verbose=verbose,
                             step_lengths=step_lengths)
         else:
             self.train = []
             self.test = []
-            self.train_org = []
-            self.train_inorg = []
+            self.train_org = self.samples_(alp,beta)
+            self.train_inorg = np.array([.01])
+            self.w_org = np.ones(len(self.train_org))
+            self.w_inorg = np.ones(len(self.train_org))
             self.alpha = self.lmb = alp
             self.beta = self.k = beta
             self.params = []
@@ -99,7 +101,8 @@ class LogLogistic(Base):
             beta: The scale parameter.
         '''
         [beta, alpha] = self.determine_params(beta, alpha, None)
-        return (beta / alpha) * (x / alpha)**(beta - 1) / (1 + (x / alpha)**beta)**2
+        return (beta / alpha) * (x / alpha)**(beta - 1) / \
+                (1 + (x / alpha)**beta)**2
 
     def cdf(self, x, alpha=None, beta=None):
         '''
@@ -228,10 +231,10 @@ class LogLogistic(Base):
             m = len(x)
             delalp = -n * beta / alp + 2 * beta / alp**(beta + 1) *\
              sum(t**beta / (1 + (t / alp)**beta)) \
-                + beta / alp**(beta + 1) * sum(x**beta / (1 + (x / alp)**beta))
+                + beta / alp**(beta + 1) * sum(x**beta / (1 + (x/alp)**beta))
             delbeta = n / beta - n * np.log(alp) + \
-                sum(np.log(t)) - 2 * sum((t / alp)**beta / (1 + (t / alp)**beta) * np.log(t / alp)) \
-                - sum((x / alp)**beta / (1 + (x / alp)**beta) * np.log(x / alp))
+                sum(np.log(t)) - 2 * sum((t/alp)**beta / (1 + (t/alp)**beta) * np.log(t/alp)) \
+                - sum((x / alp)**beta / (1 + (x / alp)**beta) * np.log(x/alp))
         return np.array([delalp, delbeta])
 
     def hessian(self, t, x, k=0.5, lmb=0.3):
@@ -326,5 +329,4 @@ def cnstrct_feature(ti, xi=None):
                           lmx[0]*lmx[1],lmx[0]*wbl[0],lmx[0]*wbl[1],
                           lmx[1]*wbl[0],lmx[1]*wbl[1],wbl[0]*wbl[1]])
     return x_features
-
 
