@@ -106,19 +106,37 @@ class ExpMix():
             lmb_sur = np.mean(np.exp(-lmb*xt*wt))
             mu_sur = np.mean(np.exp(-mu*xs*ws))
             u = ns*(1-lmb_sur)/(ns*(1-lmb_sur)+nt*(1-mu_sur))
-            tau = u*np.exp(-mu*x*wx)/(u*np.exp(-mu*x*wx)+(1-u)*np.exp(-lmb*x*wx))
+            tau = u*np.exp(-mu*x*wx)/(u*np.exp(-mu*x*wx)+\
+                    (1-u)*np.exp(-lmb*x*wx))
             mu = sum(ws)/(sum(s*ws)+sum(tau*x*wx))
             lmb = sum(wt)/(sum(t*wt)+sum((1-tau)*x*wx))
             if verbose and tt%100 == 0:
                 print("mu:" + str(mu) + ", lmb:"+str(lmb)+", u:"+str(u))
-            if(abs(mu_prev-mu)<1e-3):
+            if(abs(mu_prev-mu)/mu_prev<1e-4):
                 break
             mu_prev = mu
         return mu, lmb, u
-    
+
     def estimate_em(self,verbose=False):
         self.mu, self.lmb, self.u = self.estimate_em_(self.s,\
                             self.t, self.x, self.xs, self.xt, 
-                            self.wt, self.ws, self.wx, verbose)
+                            self.ws, self.wt, self.wx, verbose)    
+
+
+from distributions.lomax import Lomax
+
+def lomax_mix():
+    k1 = 1.1; lmb1 = 20
+    k2 = 0.1; lmb1 = 30
+    n_samples = 10000; u=0.3
+    censor = 8.0
+
+    t_len = int(n_samples*(1-u))
+    s_len = int(n_samples*u)
+    t_samples = Lomax.samples_(k1, lmb1, size=t_len)
+    s_samples = Lomax.samples_(k2, lmb2, size=s_len)
+    t = t_samples[t_samples<censor]
+    s = s_samples[s_samples<censor]
+    x_censored = np.ones(sum(t_samples>censor)+sum(s_samples>censor))
 
 

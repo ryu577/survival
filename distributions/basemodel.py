@@ -33,15 +33,19 @@ class Base(object):
         prob = self.cdf(t2, k, lmb) - (self.cdf(t1, k, lmb) if t1 > 0 else 0)
         return ress[0] / prob
 
-    def expctd_downtime(self, y, xs=np.arange(1, 100000) * 0.01, lmb=0, reg='log'):
+    def expctd_downtime_range(self, y, xs=np.arange(1, 100000) * 0.01, \
+                            lmb=0, reg=None):
         '''
         Legacy method.
-        Combines the expected downtime when the recovery happens before 
+        Combines the expected downtime when the recovery happens before
         and after the wait threshold.
         '''
-        highterms = self.survival(xs) * (xs + y)
-        lowterms = self.Ex_x_le_y(xs)
+        highterms = self.survival(xs)*(xs + y)
+        lowterms = self.expctd_x_given_x_le_y(xs)
+        #lowterms = integrate.quad(lambda x: x*self.pdf(x),0,xs)[0]
         et = lowterms + highterms
+        if reg is None:
+            return et
         if reg == 'log':
             et += lmb * np.log(xs)
         elif reg == 'sqrt':
@@ -50,12 +54,28 @@ class Base(object):
             et += lmb * xs**2
         return et
 
+    def expct_downtime(self, tau, y):
+        highterm = self.survival(tau)*(tau + y)
+        lowterm = integrate.quad(lambda t: t*self.pdf(t),0,tau)[0]
+        return lowterm + highterm
+
+    def expctd_downtime_linear_coeffs(self, tau1, tau2, y):
+        integ_dt = integrate.quad(lambda t:self.expct_downtime(t, y),\
+                        tau1, tau2)[0]
+        integ_tdt = integrate.quad(lambda t:t*self.expct_downtime(t, y),\
+                        tau1, tau2)[0]
+        a = (2*integ_tdt-(tau1+tau2)*integ_dt)/(0.6667*(tau2**3-tau1**3)-\
+                0.5*(tau2**2-tau1**2)*(tau2+tau1))
+        b = integ_dt/(tau2-tau1) - a*(tau2+tau1)/2
+        return a, b
+
     def hazard(self, t):
         return self.pdf(t) / self.survival(t)
 
     def determine_params(self, k=-1, lmb=-1, params=None):
         '''
-        Sets the shape and scale parameters of the distribution instance.
+        Sets the shape and scale parameters of the 
+        distribution instance.
         '''
         if params is not None:
             k = params[0]
@@ -71,7 +91,8 @@ class Base(object):
         '''
         The probability that the current distribution is greater than t0.
         '''
-        return lmb * ((xs > t0) * (self.survival(t0) - self.survival(xs)) + (xs > (t0 - Y)) * self.survival(xs))
+        return lmb * ((xs > t0) * (self.survival(t0) - self.survival(xs)) + (xs > (t0 - Y)) \
+                * self.survival(xs))
 
     def expected_t(self, tau, k=None, lmb=None, params=None):
         '''
@@ -84,7 +105,8 @@ class Base(object):
         [k, lmb] = self.determine_params(k, lmb, params)
         return self.expectedXBwLts(0, tau, k, lmb)
 
-    def plt_downtime(self, xs=np.arange(1, 100000) * 0.01, lmb=0, alp=1, lmb_prob=0, t0=900.0, Y=480.0, reg='log', col='b'):
+    def plt_downtime(self, xs=np.arange(1, 100000) * 0.01, 
+            lmb=0, alp=1, lmb_prob=0, t0=900.0, Y=480.0, reg='log', col='b'):
         '''
         Old function carried over for continuity. Not in active use.
         Plots the downtime (average time spent in undesirable states) with the intervention threshold.
@@ -174,10 +196,7 @@ class Base(object):
         args:
             numIter: The number of iterations gradient descent should run for.
             params: The starting parameters where it starts.
-            verbose: To print progress in iterations or not.
-            gamma: In case of L2 regularization, the strength of the regularizer. 
-                   Zero by default.
-            params0: The parameters the L2 regularization should stay close to.
+            verbose: To print progress in iterations or not.            
             step_lengths: The step lengths along the gradient the algorithm should check 
                           and make the step with the best improvement in objective function.
         '''
@@ -297,3 +316,4 @@ class Base(object):
                 [100, 100, 0]  # these values are arbitrary but don't matter.
             ])
         return (np.matrix(probs), np.matrix(times))
+    
