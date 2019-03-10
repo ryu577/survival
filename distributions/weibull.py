@@ -292,7 +292,7 @@ class Weibull(Base):
     @staticmethod
     def est_params(t):
         fn = lambda k: Weibull.kappa_fn_(t, k)
-        k = bisection(fn, 0.1, 100)
+        k = bisection(fn, 0.1, 5.0)
         lmb = Weibull.lmbd_fn(t, k)
         return k, lmb
 

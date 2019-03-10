@@ -2,7 +2,7 @@ import numpy as np
 import unittest
 from distributions.weibull import Weibull
 from distributions.lomax import Lomax
-from distributions.loglogistic import LogLogistic
+from distributions.loglogistic import *
 from distributions.expmixture import ExpMix
 from optimization.optimizn import bisection
 import time
@@ -101,49 +101,8 @@ def tst_expct_dt_slopes():
     return coefs2[0] >= 0
 
 
-def predicn(train_df, x_features, trm="alpha"):
-    y_alp = train_df[trm]
-    X = x_features
-    lhs = np.dot(X.T,X)
-    rhs = np.dot(X.T,y_alp)
-    betas = np.linalg.solve(lhs,rhs)
-    y_pred = np.dot(X,betas)
-    return y_pred, betas
-
-
 def fast_loglogistic():
-    train_df = pd.DataFrame()
-    ##Training data set.
-    for i in range(100):
-        k = np.random.uniform()*2.0
-        lmb = np.random.uniform()*20.0
-        ti = LogLogistic.samples_(lmb,k)
-        lmx = Lomax.est_params(ti)
-        wbl = Weibull.est_params(ti)
-        train_df = train_df.append({'alpha':lmb,'beta':k,\
-                        'lomax_k':lmx[0],'lomax_lmb':lmx[1],
-                        'weib_k':wbl[0],'weib_lmb':wbl[1]},
-                        ignore_index=True)
-    train_df["weib_lmb"][np.isinf(train_df["weib_lmb"])] = 1000.0
-    train_df["weib_lmb"][train_df["weib_lmb"]>1000.0] = 1000.0
-    train_df["lomax_k"][np.isnan(train_df["lomax_k"])]=10.0
-    x_features = np.ones((len(train_df),15))
-    x_features[:,1] = train_df["lomax_k"]
-    x_features[:,2] = train_df["lomax_lmb"]
-    x_features[:,3] = train_df["weib_k"]
-    x_features[:,4] = train_df["weib_lmb"]
-    x_features[:,5] = train_df["weib_k"]**2
-    x_features[:,6] = train_df["weib_lmb"]**2
-    x_features[:,7] = train_df["lomax_k"]**2
-    x_features[:,8] = train_df["lomax_lmb"]**2
-    x_features[:,9] = train_df["lomax_k"]*train_df["lomax_lmb"]
-    x_features[:,10] = train_df["lomax_k"]*train_df["weib_k"]
-    x_features[:,11] = train_df["lomax_k"]*train_df["weib_lmb"]
-    x_features[:,12] = train_df["lomax_lmb"]*train_df["weib_k"]
-    x_features[:,13] = train_df["lomax_lmb"]*train_df["weib_lmb"]
-    x_features[:,14] = train_df["weib_k"]*train_df["weib_lmb"]
-    y_alp, lin_alphas = predicn(train_df, x_features)
-    y_beta, lin_betas = predicn(train_df, x_features, "beta")
+    lin_alphas, lin_betas, y_alp, y_beta, train_df = LogLogistic.train_fast_()
     res_df = pd.DataFrame()
     for i in range(100):
         res_df = res_df.append({'actual_alpha':train_df["alpha"][i],'pred_alpha':y_alp[i],
@@ -155,12 +114,44 @@ def fast_loglogistic():
     good_df = res_df[abs(res_df["actual_alpha"]-res_df["pred_alpha"])<3.0]
 
 
-def tst_lomax_weibull():
-    sampl1 = LogLogistic.samples_(12.0,0.8)
-    sampl2 = LogLogistic.samples_(8.0,1.1)
+def compare_loglogistic_fitting_approaches():
+    """
+    This experiment convinced me to abandon the Lomax
+    and Weibull based LogLogistic estimation.
+    """
+    ti, xi = mixed_loglogistic_model()    
+    wbl = Weibull.est_params(ti)
+    lmx = Lomax.est_params(ti)
+    #Now estimate Lomax and Weibull params and construct feature vector.
+    x_features = cnstrct_feature(ti)
+    beta = sum(x_features*LogLogistic.lin_betas)
+    alpha = sum(x_features*LogLogistic.lin_alphas)
+
+
+def mixed_loglogistic_model():
+    #First generate Mixed Loglogistic data.
+    sampl1 = LogLogistic.samples_(300.0,1.2,5000)
+    sampl2 = LogLogistic.samples_(80.0,0.7,5000)
     ti = np.concatenate((sampl1,sampl2),axis=0)
     xi = np.array([.1])
+    #Time loglogistic as well
+    start = time.time()
     ll = LogLogistic(ti,xi)
-    lmx = Lomax.est_params(ti)
-    wbl = Weibull.est_params(ti)
+    end = time.time()
+    print("LogLogistic gradient descent took: "+str(end-start)+ " secs")
+    return ti, xi
+
+
+def mixed_loglogistic_model_censored():
+    sampl1 = LogLogistic.samples_(300.0,1.2,5000)
+    sampl2 = LogLogistic.samples_(80.0,0.7,5000)
+    m1 = np.mean(sampl1)
+    m2 = np.mean(sampl2)
+    ti = np.concatenate((sampl1[sampl1<m1],sampl2[sampl2<m2]),axis=0)
+    xi = np.concatenate((np.ones(sum(sampl1>m1))*m1,np.ones(sum(sampl2>m2))*m2),axis=0)
+    start = time.time()
+    ll = LogLogistic(ti,xi)
+    end = time.time()
+    print("LogLogistic gradient descent took: "+str(end-start)+ " secs")
+    print("The estimated parameters are:"+str(ll.alpha)+","+str(ll.beta))
 

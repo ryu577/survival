@@ -25,7 +25,8 @@ class Lomax(Base):
             # Initialize k and lmb to some reasonable guess
             self.k = 0.85
             self.lmb = 1e-3
-            self.newtonRh()
+            #self.newtonRh()
+            self.gradient_descent()
         else:
             self.train = []
             self.test = []
@@ -354,9 +355,9 @@ class Lomax(Base):
             - Lomax.kappafn_lmb(t, x, wt, wx, lmb)
 
     @staticmethod
-    def est_params(t, x=np.array([]), wt=None, wx=None):
+    def est_params(t, x=np.array([]), wt=None, wx=None, min_lmb=0.1, max_lmb=1000.0):
         fn = lambda lmb: Lomax.bisection_fn(t, x, wt, wx, lmb)
-        lmb = bisection(fn, 0.1, 100)
+        lmb = bisection(fn, min_lmb, max_lmb)
         k = Lomax.kappafn_lmb(t, x, wt, wx, lmb)
         return k, lmb
 

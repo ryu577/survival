@@ -14,6 +14,8 @@ class LogLogistic(Base):
     the instance of this distribution will have alpha=k always
     and beta=lmb always.
     '''
+    ## Coefficients for linear regression obtaining LogLogistic parameters
+    ## from Weibull and Lomax parameters.
     lin_alphas = np.array([ -2.52772215e+00,  -2.65188344e+00,  -1.04822376e-01,
                                     1.30662288e+01,   2.41382642e-01,   6.66425463e-03,
                                     -4.77346745e-04,   2.54565486e-01,   5.85225529e-04,
@@ -25,10 +27,10 @@ class LogLogistic(Base):
                                     -1.33985957e-02,  -4.05188576e-03,   1.20595620e-03,
                                     9.47605555e-06,  -1.73386464e-06,  -1.79663515e-03])
 
-    def __init__(self, ti=None, xi=None, alp=1, beta=0.5, 
-                 params=np.array([1.1, 1.1]),
+    def __init__(self, ti=None, xi=None, alp=1, beta=0.5,
+                 params=np.array([200.1, 1.05]),
                  w_org=None, w_inorg=None, verbose=False,
-                 step_lengths=np.array([1e-8,1e-5, 1e-3,1e-2])):
+                 step_lengths=np.array([1e-8,1e-5,1e-3,1e-2,1e-1,1.0,3.0,5.0,10.0])):
         '''
         Initializes an instance of the log logistic distribution.
         '''
@@ -145,7 +147,8 @@ class LogLogistic(Base):
     def samples_(alpha, beta, size=1000):
         return LogLogistic.inv_cdf_(np.random.uniform(size=size), alpha, beta)
 
-    def logpdf(self, x, alpha, beta):
+    @staticmethod
+    def logpdf_(x, alpha, beta):
         '''
         The logarithm of the PDF of the distribution.
         args:
@@ -153,10 +156,12 @@ class LogLogistic(Base):
             alpha: The shape parameter.
             beta: The scale parameter.
         '''
-        [beta, alpha] = self.determine_params(beta, alpha, None)
         return np.log(beta) - np.log(alpha) +\
             (beta - 1) * (np.log(x) - np.log(alpha)) \
             - 2 * np.log(1 + (x / alpha)**beta)
+
+    def logpdf(self, x):
+        return LogLogistic.logpdf_(x, self.alpha, self.beta)
 
     def survival(self, x, alpha=None, beta=None):
         '''
@@ -170,7 +175,8 @@ class LogLogistic(Base):
         [beta, alpha] = self.determine_params(beta, alpha, None)
         return 1 - self.cdf(x, alpha, beta)
 
-    def logsurvival(self, x, alpha, beta):
+    @staticmethod
+    def logsurvival_(x, alpha, beta):
         '''
         The logarithm of the survival function of the
         distribution (probability that it is greater than x).
@@ -181,8 +187,10 @@ class LogLogistic(Base):
             alpha: Shape parameter.
             beta: Scale parameter.
         '''
-        [beta, alpha] = self.determine_params(beta, alpha, None)
         return np.log(self.survival(x, alpha, beta))
+
+    def logsirvival(self, x):
+        return LogLogistic.logsurvival_(x, self.alpha, self.beta)
 
     def loglik(self, t, x, alpha, beta):
         '''
@@ -237,6 +245,26 @@ class LogLogistic(Base):
                 - sum((x / alp)**beta / (1 + (x / alp)**beta) * np.log(x/alp))
         return np.array([delalp, delbeta])
 
+    @staticmethod
+    def grad_l_pdf_(t, beta, alpha):
+        tmp = (x/alpha)**beta
+        delbeta = -tmp / (1 + tmp) * np.log(x / alpha)
+        delalpha = beta / alpha * tmp / (1 + tmp)
+        return np.array([delbeta, delalpha])
+
+    def grad_l_pdf(self, t):
+        return LogLogistic.grad_l_pdf_(t, self.beta, self.alpha)
+
+    @staticmethod
+    def grad_l_survival_(x, beta, alpha):
+        temp = (x / alpha)**beta
+        delbeta = -temp / (1 + temp) * np.log(x / alpha)
+        delalpha = beta / alpha * temp / (1 + temp)
+        return np.array([delbeta, delalpha])
+
+    def grad_l_survival(self, x):
+        return LogLogistic.grad_l_survival_(x, self.beta, self.alpha)
+
     def hessian(self, t, x, k=0.5, lmb=0.3):
         '''
         TODO: Calculate the hessian matrix of the log likelihood function
@@ -255,6 +283,10 @@ class LogLogistic(Base):
 
     def hazard(self, t):
         return self.ll_haz_rate(self.alpha, self.beta, t)
+
+    @staticmethod
+    def mean_(alpha, beta):
+        return alpha*np.pi/(beta*np.sin(np.pi/beta))
 
     @staticmethod
     def train_fast_():
@@ -292,9 +324,9 @@ class LogLogistic(Base):
         x_features[:,12] = train_df["lomax_lmb"]*train_df["weib_k"]
         x_features[:,13] = train_df["lomax_lmb"]*train_df["weib_lmb"]
         x_features[:,14] = train_df["weib_k"]*train_df["weib_lmb"]
-        _, lin_alphas = predicn(train_df, x_features)
-        _, lin_betas = predicn(train_df, x_features, "beta")
-        return lin_alphas, lin_betas
+        y_alp, lin_alphas = predicn(train_df, x_features)
+        y_beta, lin_betas = predicn(train_df, x_features, "beta")
+        return lin_alphas, lin_betas, y_alp, y_beta, train_df
 
     def retrain_linregr_params(self):
         self.lin_alphas, self.lin_betas = LogLogistic.train_fast_()
@@ -309,7 +341,6 @@ class LogLogistic(Base):
         alpha = sum(ftrs*lin_alphas)
         beta = sum(ftrs*lin_betas)
         return alpha, beta
-
 
 def predicn(train_df, x_features, trm="alpha"):
     y_alp = train_df[trm]
@@ -329,4 +360,5 @@ def cnstrct_feature(ti, xi=None):
                           lmx[0]*lmx[1],lmx[0]*wbl[0],lmx[0]*wbl[1],
                           lmx[1]*wbl[0],lmx[1]*wbl[1],wbl[0]*wbl[1]])
     return x_features
+
 
