@@ -27,8 +27,8 @@ class LogLogistic(Base):
                                     -1.33985957e-02,  -4.05188576e-03,   1.20595620e-03,
                                     9.47605555e-06,  -1.73386464e-06,  -1.79663515e-03])
 
-    def __init__(self, ti=None, xi=None, alp=1, beta=0.5,
-                 params=np.array([200.1, 1.05]),
+    def __init__(self, ti=None, xi=None, beta=0.5,alp=1,
+                 params=np.array([1.05, 200.1]),
                  w_org=None, w_inorg=None, verbose=False,
                  step_lengths=np.array([1e-8,1e-5,1e-3,1e-2,1e-1,1.0,3.0,5.0,10.0])):
         '''

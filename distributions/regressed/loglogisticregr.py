@@ -1,15 +1,16 @@
 import numpy as np
 from misc.sigmoid import *
 from distributions.loglogistic import *
+from distributions.regressed.basemodelregressed import *
 
-class LogLogisticRegr():
+class LogLogisticRegr(BaseRegressed):
     def __init__(self, ll):
         self.ll = ll
         self.shapeupper=5.0
         self.scaleupper=100.0
 
     @staticmethod
-    def loglikelihood(ti, xi, fsamples, fcensored, w, 
+    def loglikelihood_(ti, xi, fsamples, fcensored, w, 
             shapefn=None, scalefn=None):
         """
         Calculates the loglikelihood of the model with features.
@@ -39,7 +40,7 @@ class LogLogisticRegr():
         return lik
 
     @staticmethod
-    def grad(ti, xi, fsamples, fcensored, w, shapefnder, scalefnder):
+    def grad_(ti, xi, fsamples, fcensored, w, shapefnder, scalefnder):
         gradw = np.zeros(w.shape)
         for i in range(len(ti)):
             currrow = fsamples[i]
