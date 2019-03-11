@@ -71,7 +71,7 @@ class LogLogistic(Base):
                                     -1.33985957e-02,  -4.05188576e-03,   1.20595620e-03,
                                     9.47605555e-06,  -1.73386464e-06,  -1.79663515e-03])
 
-    def set_params(self, alpha, beta, params=None):
+    def set_params(self, beta, alpha, params=None):
         '''
         Sets the parameters. Need a saperate method
         for this distribution since it has alpha
@@ -83,10 +83,10 @@ class LogLogistic(Base):
             params: An array of shape and scale parameters.
         '''
         if params is not None:
-            [alpha, beta] = params[:2]
+            [beta, alpha] = params[:2]
         self.k = self.beta = beta
         self.lmb = self.alpha = alpha
-        self.params = [alpha, beta]
+        self.params = [beta, alpha]
 
     def determine_params(self, k, lmb, params):
         '''
@@ -94,7 +94,8 @@ class LogLogistic(Base):
         '''
         return super(LogLogistic, self).determine_params(k, lmb, params)
 
-    def pdf(self, x, alpha=None, beta=None):
+    @staticmethod
+    def pdf_(x, beta, alpha):
         '''
         Returns the probability density function of the distribution.
         args:
@@ -102,11 +103,14 @@ class LogLogistic(Base):
             alpha: The shape paramter.
             beta: The scale parameter.
         '''
-        [beta, alpha] = self.determine_params(beta, alpha, None)
         return (beta / alpha) * (x / alpha)**(beta - 1) / \
                 (1 + (x / alpha)**beta)**2
 
-    def cdf(self, x, alpha=None, beta=None):
+    def pdf(self,x):
+        return LogLogistic.pdf_(x, self.beta, self.alpha)
+
+    @staticmethod
+    def cdf_(x, beta, alpha):
         '''
         The cumulative density function.
         args:
@@ -114,10 +118,13 @@ class LogLogistic(Base):
             alpha: The shape parameter of the distribution.
             beta: The scale parameter of the distribution.
         '''
-        [beta, alpha] = self.determine_params(beta, alpha, None)
         return 1 / (1 + (x / alpha)**-beta)
 
-    def inv_cdf(self, u, alpha=None, beta=None):
+    def cdf(self, x):
+        return LogLogistic.cdf_(x, self.beta, self.alpha)
+
+    @staticmethod
+    def inv_cdf(self, u):
         '''
         The inverse CDF of the dsitribution (used for generating random samples).
         args:
@@ -125,14 +132,13 @@ class LogLogistic(Base):
             alpha: The shape parameter.
             beta: The scale parameter.
         '''
-        [beta, alpha] = self.determine_params(beta, alpha, None)
-        return LogLogistic.inv_cdf_(u, self.alpha, self.beta)
+        return LogLogistic.inv_cdf_(u, self.beta, self.alpha)
 
     @staticmethod
-    def inv_cdf_(u, alpha, beta):
+    def inv_cdf_(u, beta, alpha):
         return alpha * (1 / u - 1)**(-1 / beta)
 
-    def samples(self, alpha=None, beta=None, size=1000):
+    def samples(self, beta=None, alpha=None, size=1000):
         '''
         Generates samples from a log logistic distribution.
         args:
@@ -140,15 +146,14 @@ class LogLogistic(Base):
             alpha: The shape parameter of the distribution.
             beta: The scale parameter of the distribution.
         '''
-        [beta, alpha] = self.determine_params(beta, alpha, None)
-        return self.inv_cdf(np.random.uniform(size=size), alpha, beta)
+        return LogLogistic.inv_cdf_(np.random.uniform(size=size), self.beta, self.alpha)
 
     @staticmethod
-    def samples_(alpha, beta, size=1000):
+    def samples_(beta, alpha, size=1000):
         return LogLogistic.inv_cdf_(np.random.uniform(size=size), alpha, beta)
 
     @staticmethod
-    def logpdf_(x, alpha, beta):
+    def logpdf_(x, beta, alpha):
         '''
         The logarithm of the PDF of the distribution.
         args:
@@ -161,9 +166,13 @@ class LogLogistic(Base):
             - 2 * np.log(1 + (x / alpha)**beta)
 
     def logpdf(self, x):
-        return LogLogistic.logpdf_(x, self.alpha, self.beta)
+        return LogLogistic.logpdf_(x, self.beta, self.alpha)
 
-    def survival(self, x, alpha=None, beta=None):
+    @staticmethod
+    def survival_(x, beta, alpha):
+        return 1/(1+(x/alpha)**beta)
+    
+    def survival(self, x):
         '''
         The survival function of the distribution 
         (probability that it is greater than x).
@@ -172,11 +181,10 @@ class LogLogistic(Base):
             alpha: Shape parameter.
             beta: Scale parameter.
         '''
-        [beta, alpha] = self.determine_params(beta, alpha, None)
-        return 1 - self.cdf(x, alpha, beta)
+        return LogLogistic.survival_(x, self.beta, self.alpha)
 
     @staticmethod
-    def logsurvival_(x, alpha, beta):
+    def logsurvival_(x, beta, alpha):
         '''
         The logarithm of the survival function of the
         distribution (probability that it is greater than x).
@@ -187,12 +195,13 @@ class LogLogistic(Base):
             alpha: Shape parameter.
             beta: Scale parameter.
         '''
-        return np.log(self.survival(x, alpha, beta))
+        return np.log(LogLogistic.survival_(x, beta, alpha))
 
-    def logsirvival(self, x):
-        return LogLogistic.logsurvival_(x, self.alpha, self.beta)
+    def logsurvival(self, x):
+        return LogLogistic.logsurvival_(x, self.beta, self.alpha)
 
-    def loglik(self, t, x, alpha, beta):
+    @staticmethod
+    def loglik_(t, x, w_org, w_inorg, beta, alpha):
         '''
         The log likelihood of the loglogistic distribution.
         args:
@@ -201,15 +210,23 @@ class LogLogistic(Base):
             alpha: The shape parameter.
             beta: The scale parameter.
         '''
-        [beta, alpha] = self.determine_params(beta, alpha, None)
-        if len(self.w_org) == len(t) and len(self.w_inorg) == len(x):
-            return sum(self.w_org * self.logpdf(t, alpha, beta)) + \
-                sum(self.w_inorg * self.logsurvival(x, alpha, beta))
+        if len(w_org) == len(t) and len(w_inorg) == len(x):
+            return sum(w_org * LogLogistic.logpdf_(t, beta, alpha)) + \
+                sum(w_inorg * LogLogistic.logsurvival_(x, beta, alpha))
         else:
-            return sum(self.logpdf(t, alpha, beta)) +\
-                sum(self.logsurvival(x, alpha, beta))
+            return sum(LogLogistic.logpdf_(t, beta, alpha)) +\
+                sum(LogLogistic.logsurvival_(x, beta, alpha))
 
-    def grad(self, t, x, alp=None, beta=None):
+    def loglik(self, t=None, x=None):
+        if t is None:
+            t = self.train_org
+        if x is None:
+            x = self.train_inorg
+        return LogLogistic.loglik_(t, x, self.w_org, self.w_inorg,
+                    self.beta, self.alpha)
+    
+    @staticmethod
+    def grad_(t, x, w_org, w_inorg, beta, alp):
         '''
         Analytically calculates the gradient.
         args:
@@ -218,22 +235,18 @@ class LogLogistic(Base):
             alp: The scale parameter.
             beta: The shape parameter.
         '''
-        if alp is None:
-            alp = self.alpha
-        if beta is None:
-            beta = self.beta
-        if len(self.w_org) == len(t) and len(self.w_inorg) == len(x):
-            n = np.sum(self.w_org)
-            m = np.sum(self.w_inorg)
-            delalp = -n * beta / alp + 2 * beta / alp**(beta + 1) *\
-                sum(t**beta / (1 + (t / alp)**beta) * self.w_org) \
+        if len(w_org) == len(t) and len(w_inorg) == len(x):
+            n = np.sum(w_org)
+            m = np.sum(w_inorg)
+            delalp = -n * beta / alp + 2 * beta / alp**(beta + 1) \
+                *sum(t**beta / (1 + (t / alp)**beta) * w_org) \
                 + beta / alp**(beta + 1) * sum(x**beta /
-                                               (1 + (x / alp)**beta) * self.w_inorg)
-            delbeta = n / beta - n * np.log(alp) + sum(np.log(t) * self.w_org)\
+                                               (1 + (x / alp)**beta) * w_inorg)
+            delbeta = n / beta - n * np.log(alp) + sum(np.log(t) * w_org)\
                 - 2 * sum((t / alp)**beta / (1 + (t / alp)**beta)
-                          * np.log(t / alp) * self.w_org) \
+                          * np.log(t / alp) * w_org) \
                 - sum((x / alp)**beta / (1 + (x / alp)**beta)
-                      * np.log(x / alp) * self.w_inorg)
+                      * np.log(x / alp) * w_inorg)
         else:
             n = len(t)
             m = len(x)
@@ -243,7 +256,14 @@ class LogLogistic(Base):
             delbeta = n / beta - n * np.log(alp) + \
                 sum(np.log(t)) - 2 * sum((t/alp)**beta / (1 + (t/alp)**beta) * np.log(t/alp)) \
                 - sum((x / alp)**beta / (1 + (x / alp)**beta) * np.log(x/alp))
-        return np.array([delalp, delbeta])
+        return np.array([delbeta, delalp])
+
+    def grad(self, t=None,x=None):
+        if t is None:
+            t = self.train_org
+        if x is None:
+            x = self.train_inorg
+        return LogLogistic.grad_(t,x,self.w_org,self.w_inorg,self.beta, self.alpha)
 
     @staticmethod
     def grad_l_pdf_(t, beta, alpha):
@@ -278,14 +298,14 @@ class LogLogistic(Base):
         return self.numerical_hessian(t, x, k, lmb)
 
     @staticmethod
-    def ll_haz_rate(alpha, beta, t):
+    def ll_haz_rate_(beta, alpha, t):
         return (beta/alpha)*(t/alpha)**(beta-1)/(1+(t/alpha)**beta)
 
     def hazard(self, t):
-        return self.ll_haz_rate(self.alpha, self.beta, t)
+        return self.ll_haz_rate_(self.beta, self.alpha, t)
 
     @staticmethod
-    def mean_(alpha, beta):
+    def mean_(beta, alpha):
         return alpha*np.pi/(beta*np.sin(np.pi/beta))
 
     @staticmethod
@@ -328,11 +348,8 @@ class LogLogistic(Base):
         y_beta, lin_betas = predicn(train_df, x_features, "beta")
         return lin_alphas, lin_betas, y_alp, y_beta, train_df
 
-    def retrain_linregr_params(self):
-        self.lin_alphas, self.lin_betas = LogLogistic.train_fast_()
-
     @staticmethod
-    def est_params_fast_(ti,xi,lin_alphas=None,lin_betas=None):
+    def est_params_fast_(ti,xi,lin_betas=None, lin_alphas=None):
         if lin_alphas is None:
             lin_alphas = LogLogistic.lin_alphas
         if lin_betas is None:
@@ -340,7 +357,7 @@ class LogLogistic(Base):
         ftrs = cnstrct_feature(ti, xi)
         alpha = sum(ftrs*lin_alphas)
         beta = sum(ftrs*lin_betas)
-        return alpha, beta
+        return beta, alpha
 
 def predicn(train_df, x_features, trm="alpha"):
     y_alp = train_df[trm]

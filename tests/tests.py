@@ -4,6 +4,7 @@ from distributions.weibull import Weibull
 from distributions.lomax import Lomax
 from distributions.loglogistic import *
 from distributions.expmixture import ExpMix
+from distributions.regressed.loglogisticregr import *
 from optimization.optimizn import bisection
 import time
 import matplotlib.pyplot as plt
@@ -155,3 +156,7 @@ def mixed_loglogistic_model_censored():
     print("LogLogistic gradient descent took: "+str(end-start)+ " secs")
     print("The estimated parameters are:"+str(ll.alpha)+","+str(ll.beta))
 
+
+ti,xi,fsamples,fcensored = BaseRegressed.generate_data_(LogLogistic,100)
+w = np.ones((2,fsamples.shape[1]))
+LogLogisticRegr.loglikelihood_(ti, xi, fsamples, fcensored, w)
