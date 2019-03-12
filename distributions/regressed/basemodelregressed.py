@@ -3,7 +3,7 @@ import abc
 import matplotlib.pyplot as plt
 import scipy.integrate as integrate
 from scipy.stats import exponweib
-
+from misc.sigmoid import *
 
 class BaseRegressed(object):
     __metaclass__ = abc.ABCMeta
@@ -34,4 +34,68 @@ class BaseRegressed(object):
         fcensored = np.concatenate((fcensored1,fcensored2),axis=0)
         return ti, xi, fsamples, fcensored
 
+    @staticmethod
+    def loglikelihood_(ti, xi, fsamples, fcensored, distr, w, 
+            shapefn=None, scalefn=None):
+        """
+        Calculates the loglikelihood of the model with features.
+        args:
+            ti: The vector of organic recoveries.
+            xi: The vector of inroganic recoveries.
+            fsamples: The matrix of features corresponding to organic recoveries.
+            fcensored: The matrix of features corresponding to inorganic.
+        """
+        lik = 0
+        if shapefn is None:
+            shapefn = lambda x: Sigmoid.transform(x,5.0)
+        if scalefn is None:
+            scalefn = lambda x: Sigmoid.transform(x,900.0)
+        for i in range(len(ti)):
+            currentrow = fsamples[i]
+            theta = np.dot(w,currentrow)
+            shape = shapefn(theta[0])
+            scale = scalefn(theta[1])
+            lik += distr.logpdf_(ti[i], shape, scale)
+        for i in range(len(xi)):
+            currentrow = fcensored[i]
+            theta = np.dot(w,currentrow)
+            shape = shapefn(theta[0])
+            scale = scalefn(theta[1])
+            lik += distr.logsurvival_(xi[i], shape, scale)
+        return lik
+
+    @staticmethod
+    def numerical_grad_(ti, xi, fsamples, fcensored, distr, w, 
+            shapefn=None, scalefn=None):
+        numerical_grd = np.zeros(w.shape)
+        for i in range(w.shape[0]):
+            for j in range(w.shape[1]):
+                w[i,j] += 1e-4
+                ll1 = BaseRegressed.loglikelihood_(ti, xi, fsamples, fcensored, distr, w,
+                                                shapefn, scalefn)
+                w[i,j] -= 2e-4
+                ll2 = BaseRegressed.loglikelihood_(ti, xi, fsamples, fcensored, distr, w,
+                                                shapefn, scalefn)
+                w[i,j] += 1e-4
+                numerical_grd[i,j] = (ll2-ll1)/2e-4
+        return numerical_grd
+
+    @staticmethod
+    def grad_(ti, xi, fsamples, fcensored, w, distr, shapefnder, scalefnder):
+        gradw = np.zeros(w.shape)
+        for i in range(len(ti)):
+            currrow = fsamples[i]
+            theta = np.dot(w,currrow)
+            lpdfgrd = distr.grad_l_pdf_(ti[i], theta[0], theta[1])
+            fn_grad = np.array([shapefnder(theta[0]), scalefnder(theta[1])])
+            deltheta = lpdfgrd*fn_grad
+            gradw += np.outer(deltheta, currrow)
+        for i in range(len(xi)):
+            currrow = fcensored[i]
+            theta = np.dot(w,currrow)
+            lpdfgrd = distr.grad_l_survival_(xi[i], theta[0], theta[1])
+            fn_grad = np.array([shapefnder(theta[0]), scalefnder(theta[1])])
+            deltheta = lpdfgrd*fn_grad
+            gradw += np.outer(deltheta, currrow)
+        return gradw
 

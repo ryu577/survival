@@ -49,7 +49,7 @@ def tst_lomax():
     return abs(params[0]-1.1) < 1e-1
 
 def tst_loglogistic():
-    t = LogLogistic.samples_(10, 1.2, size=10000)
+    t = LogLogistic.samples_(1.2, 10, size=10000)
     start = time.time()
     ll = LogLogistic(ti=t, xi=np.array([]))
     end = time.time()
@@ -120,7 +120,7 @@ def compare_loglogistic_fitting_approaches():
     This experiment convinced me to abandon the Lomax
     and Weibull based LogLogistic estimation.
     """
-    ti, xi = mixed_loglogistic_model()    
+    ti, xi = mixed_loglogistic_model()
     wbl = Weibull.est_params(ti)
     lmx = Lomax.est_params(ti)
     #Now estimate Lomax and Weibull params and construct feature vector.
@@ -131,8 +131,8 @@ def compare_loglogistic_fitting_approaches():
 
 def mixed_loglogistic_model():
     #First generate Mixed Loglogistic data.
-    sampl1 = LogLogistic.samples_(300.0,1.2,5000)
-    sampl2 = LogLogistic.samples_(80.0,0.7,5000)
+    sampl1 = LogLogistic.samples_(1.2,300.0,5000)
+    sampl2 = LogLogistic.samples_(0.7,80.0,5000)
     ti = np.concatenate((sampl1,sampl2),axis=0)
     xi = np.array([.1])
     #Time loglogistic as well
@@ -144,8 +144,8 @@ def mixed_loglogistic_model():
 
 
 def mixed_loglogistic_model_censored():
-    sampl1 = LogLogistic.samples_(300.0,1.2,5000)
-    sampl2 = LogLogistic.samples_(80.0,0.7,5000)
+    sampl1 = LogLogistic.samples_(1.2,300.0,5000)
+    sampl2 = LogLogistic.samples_(0.7,80.0,5000)
     m1 = np.mean(sampl1)
     m2 = np.mean(sampl2)
     ti = np.concatenate((sampl1[sampl1<m1],sampl2[sampl2<m2]),axis=0)
@@ -159,4 +159,12 @@ def mixed_loglogistic_model_censored():
 
 ti,xi,fsamples,fcensored = BaseRegressed.generate_data_(LogLogistic,100)
 w = np.ones((2,fsamples.shape[1]))
-LogLogisticRegr.loglikelihood_(ti, xi, fsamples, fcensored, w)
+ll=LogLogistic(ti, xi)
+loglik = LogLogisticRegr.loglikelihood_(ti, xi, fsamples, fcensored, ll, w)
+numr_grd = LogLogisticRegr.numerical_grad_(ti, xi, fsamples, fcensored, ll, w)
+
+#TODO: Implement shapefnder and scalefnder.
+#grd = LogLogisticRegr.grad_(ti, xi, fsamples, fcensored, ll, w)
+
+
+

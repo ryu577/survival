@@ -106,7 +106,7 @@ class LogLogistic(Base):
         return (beta / alpha) * (x / alpha)**(beta - 1) / \
                 (1 + (x / alpha)**beta)**2
 
-    def pdf(self,x):
+    def pdf(self, x):
         return LogLogistic.pdf_(x, self.beta, self.alpha)
 
     @staticmethod
@@ -150,7 +150,7 @@ class LogLogistic(Base):
 
     @staticmethod
     def samples_(beta, alpha, size=1000):
-        return LogLogistic.inv_cdf_(np.random.uniform(size=size), alpha, beta)
+        return LogLogistic.inv_cdf_(np.random.uniform(size=size), beta, alpha)
 
     @staticmethod
     def logpdf_(x, beta, alpha):
@@ -217,13 +217,17 @@ class LogLogistic(Base):
             return sum(LogLogistic.logpdf_(t, beta, alpha)) +\
                 sum(LogLogistic.logsurvival_(x, beta, alpha))
 
-    def loglik(self, t=None, x=None):
+    def loglik(self, t=None, x=None, beta=None, alpha=None):
         if t is None:
             t = self.train_org
         if x is None:
             x = self.train_inorg
+        if beta is None:
+            beta = self.beta
+        if alpha is None:
+            alpha=self.alpha
         return LogLogistic.loglik_(t, x, self.w_org, self.w_inorg,
-                    self.beta, self.alpha)
+                    beta, alpha)
     
     @staticmethod
     def grad_(t, x, w_org, w_inorg, beta, alp):
@@ -258,12 +262,16 @@ class LogLogistic(Base):
                 - sum((x / alp)**beta / (1 + (x / alp)**beta) * np.log(x/alp))
         return np.array([delbeta, delalp])
 
-    def grad(self, t=None,x=None):
+    def grad(self, t=None,x=None,beta=None,alpha=None):
         if t is None:
             t = self.train_org
         if x is None:
             x = self.train_inorg
-        return LogLogistic.grad_(t,x,self.w_org,self.w_inorg,self.beta, self.alpha)
+        if beta is None:
+            beta = self.beta
+        if alpha is None:
+            alpha = self.alpha
+        return LogLogistic.grad_(t,x,self.w_org,self.w_inorg, beta, alpha)
 
     @staticmethod
     def grad_l_pdf_(t, beta, alpha):
