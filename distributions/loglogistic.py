@@ -52,7 +52,7 @@ class LogLogistic(Base):
         else:
             self.train = []
             self.test = []
-            self.train_org = self.samples_(alp,beta)
+            self.train_org = self.samples_(beta,alp)
             self.train_inorg = np.array([.01])
             self.w_org = np.ones(len(self.train_org))
             self.w_inorg = np.ones(len(self.train_org))
