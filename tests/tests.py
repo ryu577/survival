@@ -107,7 +107,7 @@ def predicn(trm="alpha"):
         rhs = np.dot(X.T,y_alp)
         betas = np.linalg.solve(lhs,rhs)
         y_pred = np.dot(X,betas)
-        return y_pred, lin_betas
+        return y_pred, betas
 
 
 def fast_loglogistic():
