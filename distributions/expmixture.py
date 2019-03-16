@@ -127,7 +127,7 @@ from distributions.lomax import Lomax
 
 def lomax_mix():
     k1 = 1.1; lmb1 = 20
-    k2 = 0.1; lmb1 = 30
+    k2 = 0.1; lmb2 = 30
     n_samples = 10000; u=0.3
     censor = 8.0
 

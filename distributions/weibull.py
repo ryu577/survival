@@ -292,7 +292,7 @@ class Weibull(Base):
     @staticmethod
     def est_params(t):
         fn = lambda k: Weibull.kappa_fn_(t, k)
-        k = bisection(fn, 0.1, 100)
+        k = bisection(fn, 0.1, 5.0)
         lmb = Weibull.lmbd_fn(t, k)
         return k, lmb
 
@@ -450,11 +450,12 @@ if __name__ == '__main__':
     w = Weibull()
     x_samples = generate_features(100)
     t = generate_weibull(100)
-    x_censored = x_samples[t > 1.5, ]
-    x_samples = x_samples[t < 1.5, ]
+    x_censored = x_samples[t > 1.5,]
+    x_samples = x_samples[t < 1.5,]
     x = np.ones(sum(t > 1.5)) * 1.5
     t = t[t < 1.5]
     W = np.array([[0.1, 0.4], [0.5, 0.3], [0.2, 0.7]])
     print(str(w.loglik(t, x, W=W, x_censored=x_censored, x_samples=x_samples)))
     print(str(w.grad(t, x, W=W, x_censored=x_censored, x_samples=x_samples)))
     w.gradient_descent(params=W)
+

@@ -105,7 +105,7 @@ class Base(object):
         [k, lmb] = self.determine_params(k, lmb, params)
         return self.expectedXBwLts(0, tau, k, lmb)
 
-    def plt_downtime(self, xs=np.arange(1, 100000) * 0.01, 
+    def plt_downtime(self, xs=np.arange(1, 100000) * 0.01,
             lmb=0, alp=1, lmb_prob=0, t0=900.0, Y=480.0, reg='log', col='b'):
         '''
         Old function carried over for continuity. Not in active use.
@@ -150,7 +150,8 @@ class Base(object):
 
     def numerical_hessian(self, t, x, k=0.5, lmb=0.3):
         '''
-        Numerically evaluates the hessian matrix (https://en.wikipedia.org/wiki/Hessian_matrix)
+        Numerically evaluates the hessian matrix
+        (https://en.wikipedia.org/wiki/Hessian_matrix)
         args:
             t: The array of survival times.
             x: The array of censored survivals.
@@ -159,10 +160,11 @@ class Base(object):
         '''
         eps = 1e-4
         delksq = (self.loglik(t, x, k + 2 * eps, lmb) + self.loglik(t, x,
-                                                                    k - 2 * eps, lmb) - 2 * self.loglik(t, x, k, lmb)) / 4 / eps / eps
+                k - 2 * eps, lmb) - 2 * self.loglik(t, x, k, lmb)) / 4 / eps / eps
         dellmbsq = (self.loglik(t, x, k, lmb + 2 * eps) + self.loglik(t, x,
-                                                                      k, lmb - 2 * eps) - 2 * self.loglik(t, x, k, lmb)) / 4 / eps / eps
-        dellmbk = (self.loglik(t, x, k + eps, lmb + eps) + self.loglik(t, x, k - eps, lmb - eps) - self.loglik(t, x, k + eps, lmb - eps) //
+                k, lmb - 2 * eps) - 2 * self.loglik(t, x, k, lmb)) / 4 / eps / eps
+        dellmbk = (self.loglik(t, x, k + eps, lmb + eps) + self.loglik(t, x, k - eps, lmb - eps) 
+                    - self.loglik(t, x, k + eps, lmb - eps) //
                    - self.loglik(t, x, k - eps, lmb + eps)) / 4 / eps / eps
         hess = np.zeros([2, 2])
         hess[0, 0] = delksq
