@@ -157,14 +157,13 @@ def mixed_loglogistic_model_censored():
     print("The estimated parameters are:"+str(ll.alpha)+","+str(ll.beta))
 
 
-ti,xi,fsamples,fcensored = BaseRegressed.generate_data_(LogLogistic,100)
-w = np.ones((2,fsamples.shape[1]))
-ll=LogLogistic(ti, xi)
-loglik = LogLogisticRegr.loglikelihood_(ti, xi, fsamples, fcensored, ll, w)
-numr_grd = LogLogisticRegr.numerical_grad_(ti, xi, fsamples, fcensored, ll, w)
-
-#TODO: Implement shapefnder and scalefnder.
-#grd = LogLogisticRegr.grad_(ti, xi, fsamples, fcensored, ll, w)
-
+def tst_featured_graad():
+    ti,xi,fsamples,fcensored = BaseRegressed.generate_data_(LogLogistic,100)
+    w = np.ones((2,fsamples.shape[1]))
+    ll=LogLogistic(ti, xi)
+    loglik = LogLogisticRegr.loglikelihood_(ti, xi, fsamples, fcensored, ll, w)
+    numr_grd = LogLogisticRegr.numerical_grad_(ti, xi, fsamples, fcensored, ll, w)
+    #TODO: Implement shapefnder and scalefnder.
+    #grd = LogLogisticRegr.grad_(ti, xi, fsamples, fcensored, ll, w)
 
 
