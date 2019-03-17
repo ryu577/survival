@@ -131,6 +131,14 @@ def tst_grad_w_features():
     return abs(grd[0,0]-grd_numr[0,0]) < 1e-3
 
 
+def tst_loglogistic_fitting():
+    llr = LogLogisticRegr()
+    w = np.array([[1.0,1.0,1.0],[1.0,1.0,1.0]])
+    llr.gradient_descent(w)
+
+
+
+
 #######################################
 ##
 #######################################
