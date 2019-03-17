@@ -47,9 +47,9 @@ class BaseRegressed(object):
         """
         lik = 0
         if shapefn is None:
-            shapefn = lambda x: Sigmoid.transform(x,5.0)
+            shapefn = lambda x: Sigmoid.transform_(x,5.0)
         if scalefn is None:
-            scalefn = lambda x: Sigmoid.transform(x,900.0)
+            scalefn = lambda x: Sigmoid.transform_(x,900.0)
         for i in range(len(ti)):
             currentrow = fsamples[i]
             theta = np.dot(w,currentrow)
@@ -70,30 +70,44 @@ class BaseRegressed(object):
         numerical_grd = np.zeros(w.shape)
         for i in range(w.shape[0]):
             for j in range(w.shape[1]):
-                w[i,j] += 1e-4
-                ll1 = BaseRegressed.loglikelihood_(ti, xi, fsamples, fcensored, distr, w,
+                w[i,j] += 1e-5
+                ll1 = BaseRegressed.loglikelihood_(ti, xi, fsamples, fcensored, 
+                                                distr, w,
                                                 shapefn, scalefn)
-                w[i,j] -= 2e-4
-                ll2 = BaseRegressed.loglikelihood_(ti, xi, fsamples, fcensored, distr, w,
+                w[i,j] -= 2e-5
+                ll2 = BaseRegressed.loglikelihood_(ti, xi, fsamples, fcensored, 
+                                                distr, w,
                                                 shapefn, scalefn)
-                w[i,j] += 1e-4
-                numerical_grd[i,j] = (ll2-ll1)/2e-4
+                w[i,j] += 1e-5
+                numerical_grd[i,j] = (ll1-ll2)/2e-5
         return numerical_grd
 
     @staticmethod
-    def grad_(ti, xi, fsamples, fcensored, w, distr, shapefnder, scalefnder):
+    def grad_(ti, xi, fsamples, fcensored, distr, w, 
+            shapefn=None, scalefn=None,
+            shapefnder=None, scalefnder=None):
+        if shapefnder is None:
+            shapefnder = lambda x : Sigmoid.grad_(x,5.0)
+        if scalefnder is None:
+            scalefnder = lambda x : Sigmoid.grad_(x,900.0)
+        if shapefn is None:
+            shapefn = lambda x: Sigmoid.transform_(x,5.0)
+        if scalefn is None:
+            scalefn = lambda x: Sigmoid.transform_(x,900.0)
         gradw = np.zeros(w.shape)
         for i in range(len(ti)):
             currrow = fsamples[i]
             theta = np.dot(w,currrow)
-            lpdfgrd = distr.grad_l_pdf_(ti[i], theta[0], theta[1])
+            shape, scale = shapefn(theta[0]), scalefn(theta[1])
+            lpdfgrd = distr.grad_l_pdf_(ti[i], shape, scale)
             fn_grad = np.array([shapefnder(theta[0]), scalefnder(theta[1])])
             deltheta = lpdfgrd*fn_grad
             gradw += np.outer(deltheta, currrow)
         for i in range(len(xi)):
             currrow = fcensored[i]
             theta = np.dot(w,currrow)
-            lpdfgrd = distr.grad_l_survival_(xi[i], theta[0], theta[1])
+            shape, scale = shapefn(theta[0]), scalefn(theta[1])
+            lpdfgrd = distr.grad_l_survival_(xi[i], shape, scale)
             fn_grad = np.array([shapefnder(theta[0]), scalefnder(theta[1])])
             deltheta = lpdfgrd*fn_grad
             gradw += np.outer(deltheta, currrow)

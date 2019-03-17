@@ -52,7 +52,7 @@ class LogLogistic(Base):
         else:
             self.train = []
             self.test = []
-            self.train_org = self.samples_(alp,beta)
+            self.train_org = self.samples_(beta,alp)
             self.train_inorg = np.array([.01])
             self.w_org = np.ones(len(self.train_org))
             self.w_inorg = np.ones(len(self.train_org))
@@ -275,9 +275,9 @@ class LogLogistic(Base):
 
     @staticmethod
     def grad_l_pdf_(t, beta, alpha):
-        tmp = (x/alpha)**beta
-        delbeta = -tmp / (1 + tmp) * np.log(x / alpha)
-        delalpha = beta / alpha * tmp / (1 + tmp)
+        tmp = (t/alpha)**beta
+        delbeta = 1/beta +np.log(t/alpha)*(1-2*tmp/(1+tmp))
+        delalpha = -beta / alpha + 2*beta*tmp/(1+tmp)/alpha
         return np.array([delbeta, delalpha])
 
     def grad_l_pdf(self, t):
