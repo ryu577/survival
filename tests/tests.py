@@ -31,6 +31,12 @@ class TestDistributions(unittest.TestCase):
     def tst_expct_dt_slopes(self):
         self.assertTrue(tst_expct_dt_slopes())
 
+    def tst_loglik_w_features(self):
+        self.assertTrue(tst_loglik_w_features())
+
+    def tst_grad_w_features(self):
+        self.assertTrue(tst_grad_w_features())
+
 
 def tst_weibull():
     t = Weibull.samples_(1.1, 200, size=10000)
@@ -93,7 +99,6 @@ def tst_expmix_em_raw(mu_o=1/10, lmb_o=1/5, u_o=0.8, c=8):
 def tst_expct_dt_slopes():
     sam = LogLogistic.samples_(1.1,10)
     ll = LogLogistic(sam,np.array([.01]))
-    coefs = ll.expctd_downtime_linear_coeffs(1,3,10)
     xs = np.arange(.1,10.,.1)
     ys = ll.hazard(xs)
     plt.plot(xs, ys)
@@ -101,6 +106,42 @@ def tst_expct_dt_slopes():
     coefs2 = ll.expctd_downtime_linear_coeffs(opt_tau,opt_tau+15.0,3.0)
     return coefs2[0] >= 0
 
+
+def tst_loglik_w_features():
+    ti = np.array([1.0,1.0])
+    xi = np.array([1.0,1.0])
+    fsamples = np.array([[1,1],[1,1]])
+    fcensored = np.array([[1,1],[1,1]])
+    w = np.array([[1,1],[1,1]])
+    ll = LogLogistic(ti,xi)
+    ## Note that shape and scale upper bounds are 5 and 900 by default.
+    loglik = LogLogisticRegr.loglikelihood_(ti, xi, fsamples, fcensored, ll, w)
+    return abs(loglik + 55.83229) < 1e-3
+
+
+def tst_grad_w_features():
+    ti = np.array([1.0,1.0])
+    xi = np.array([1.0,1.0])
+    fsamples = np.array([[1,1],[1,1]])
+    fcensored = np.array([[1,1],[1,1]])
+    w = np.array([[1.0,1.0],[1.0,1.0]])
+    ll = LogLogistic(ti,xi)
+    grd = LogLogisticRegr.grad_(ti, xi, fsamples, fcensored, ll, w)
+    grd_numr = LogLogisticRegr.numerical_grad_(ti, xi, fsamples, fcensored, ll, w)
+    return abs(grd[0,0]-grd_numr[0,0]) < 1e-3
+
+
+def tst_loglogistic_fitting():
+    llr = LogLogisticRegr()
+    w = np.array([[1.0,1.0,1.0],[1.0,1.0,1.0]])
+    llr.gradient_descent(w)
+
+
+
+
+#######################################
+##
+#######################################
 
 def fast_loglogistic():
     lin_alphas, lin_betas, y_alp, y_beta, train_df = LogLogistic.train_fast_()
@@ -155,16 +196,5 @@ def mixed_loglogistic_model_censored():
     end = time.time()
     print("LogLogistic gradient descent took: "+str(end-start)+ " secs")
     print("The estimated parameters are:"+str(ll.alpha)+","+str(ll.beta))
-
-
-ti,xi,fsamples,fcensored = BaseRegressed.generate_data_(LogLogistic,100)
-w = np.ones((2,fsamples.shape[1]))
-ll=LogLogistic(ti, xi)
-loglik = LogLogisticRegr.loglikelihood_(ti, xi, fsamples, fcensored, ll, w)
-numr_grd = LogLogisticRegr.numerical_grad_(ti, xi, fsamples, fcensored, ll, w)
-
-#TODO: Implement shapefnder and scalefnder.
-#grd = LogLogisticRegr.grad_(ti, xi, fsamples, fcensored, ll, w)
-
 
 

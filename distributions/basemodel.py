@@ -191,7 +191,8 @@ class Base(object):
         return np.array([delalp, delbeta])
 
     def gradient_descent(self, numIter=2001, params=np.array([2.0, 2.0]), verbose=False,
-        step_lengths=[1e-8, 1e-7, 1e-5, 1e-3, 1e-2, .1, 10, 50, 70, 120, 150, 200, 250, 270, 300, 500, 1e3, 1.5e3, 2e3, 3e3]
+        step_lengths=[1e-8, 1e-7, 1e-5, 1e-3, 1e-2, .1, 10, 50, 70, 120, 150, 
+                      200, 250, 270, 300, 500, 1e3, 1.5e3, 2e3, 3e3]
         ):
         '''
         Performs gradient descent to fit the parameters of our distribution.

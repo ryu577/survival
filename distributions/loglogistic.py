@@ -275,9 +275,9 @@ class LogLogistic(Base):
 
     @staticmethod
     def grad_l_pdf_(t, beta, alpha):
-        tmp = (x/alpha)**beta
-        delbeta = -tmp / (1 + tmp) * np.log(x / alpha)
-        delalpha = beta / alpha * tmp / (1 + tmp)
+        tmp = (t/alpha)**beta
+        delbeta = 1/beta +np.log(t/alpha)*(1-2*tmp/(1+tmp))
+        delalpha = -beta / alpha + 2*beta*tmp/(1+tmp)/alpha
         return np.array([delbeta, delalpha])
 
     def grad_l_pdf(self, t):

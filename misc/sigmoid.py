@@ -12,6 +12,11 @@ class Sigmoid():
         return self.upper_bound*p*(1-p)
 
     @staticmethod
-    def transform(x, u):
+    def transform_(x, u):
         return u/(1+np.exp(-x))
+
+    @staticmethod
+    def grad_(x, u):
+        p = Sigmoid.transform_(x, u)/u
+        return u*p*(1-p)
 
