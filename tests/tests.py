@@ -142,7 +142,10 @@ def tst_gaussmix_grad():
     x = gm.samples(100000)
     grd = gm.numr_grad(x)
 
-
+def tst_gaussmix_fit():
+    gm = GaussMix(-2,1,2,1,0.3)
+    x = gm.samples(1000)
+    param = gm.numr_fit(x)	
 #######################################
 ##
 #######################################
