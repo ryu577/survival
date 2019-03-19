@@ -3,7 +3,8 @@ import unittest
 from distributions.weibull import Weibull
 from distributions.lomax import Lomax
 from distributions.loglogistic import *
-from distributions.expmixture import ExpMix
+from distributions.mixture.expmixture import ExpMix
+from distributions.mixture.gaussianmix import GaussMix
 from distributions.regressed.loglogisticregr import *
 from optimization.optimizn import bisection
 import time
@@ -136,7 +137,10 @@ def tst_loglogistic_fitting():
     w = np.array([[1.0,1.0,1.0],[1.0,1.0,1.0]])
     llr.gradient_descent(w)
 
-
+def tst_gaussmix_grad():
+    gm = GaussMix(-2,1,2,1,0.3)
+    x = gm.samples(100000)
+    grd = gm.numr_grad(x)
 
 
 #######################################
