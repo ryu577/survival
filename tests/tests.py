@@ -137,10 +137,12 @@ def tst_loglogistic_fitting():
     w = np.array([[1.0,1.0,1.0],[1.0,1.0,1.0]])
     llr.gradient_descent(w)
 
+
 def tst_gaussmix_grad():
-    gm = GaussMix(-2,1,2,1,0.3)
-    x = gm.samples(100000)
+    gm = GaussMix(mu1=-2,sigma1=1,mu2=2,sigma2=1,p=0.3)
+    x = gm.samples(1000000)
     grd = gm.numr_grad(x)
+    return grd
 
 
 #######################################
