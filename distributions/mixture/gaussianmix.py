@@ -1,5 +1,8 @@
 import numpy as np
 from scipy.stats import norm
+from sklearn.cluster import KMeans
+from itertools import groupby
+import matplotlib.pyplot as plt
 
 class GaussMix():    
     def __init__(self,mu1,sigma1,mu2,sigma2,p):
@@ -27,6 +30,14 @@ class GaussMix():
     def loglik(self,x):
         mu1,mu2,sigma1,sigma2,p=self.mu1,self.mu2,self.sigma1,self.sigma2,self.p
         return GaussMix.loglik_(x,mu1,mu2,sigma1,sigma2,p)
+    
+    def loglik_p(self, x, prms):
+        """
+        A log likelihood function that takes a params vector
+        as input.
+        """
+        mu1,sigma1,mu2,sigma2,p = prms
+        return GaussMix.loglik_(x, mu1,sigma1,mu2,sigma2,p)
 
     @staticmethod
     def grad_(x,mu1, sigma1, mu2, sigma2, p):
@@ -71,15 +82,12 @@ class GaussMix():
 
     def numr_grad(self, x):
         mu1, mu2, sigma1, sigma2, p = self.mu1, self.mu2, self.sigma1, self.sigma2, self.p
-
         return GaussMix.numr_grad_(x, mu1, sigma1, mu2, sigma2, p)
 
     def numr_fit(self,x, n_component):
-        from sklearn.cluster import KMeans
         kmeans = KMeans(n_clusters=n_component).fit(x.reshape(-1, 1))
         mu1, mu2 = kmeans.cluster_centers_
         mu1, mu2 = mu1[0], mu2[0]
-        from itertools import groupby
         lens = [len(list(group)) for key, group in groupby(sorted(kmeans.labels_))]
         p = lens[0]/(float)(sum(lens))
         sigma1 = np.std(x[kmeans.labels_==0]-mu1)
@@ -87,8 +95,7 @@ class GaussMix():
         params_init = (mu1,sigma1, mu2, sigma2, p)
         liklihood_init = GaussMix.loglik_(x, mu1, sigma1, mu2, sigma2, p)
         print("init mu1,sig1,mu2, sig2, p: {}".format((mu1,sigma1, mu2, sigma2, p)))
-
-        lr = 1e-2
+        lr = 1e-2 #Learning Rate.
         max_iter = 10000
         iter = 0
         n_data = len(x)
@@ -104,11 +111,8 @@ class GaussMix():
             iter += 1
             last_liklihood = liklihood
             track.append(liklihood)
-
-        import matplotlib.pyplot as plt
         plt.plot(track)
         plt.title("Liklihood Increase trend")
-
         print("Fit result after {} iteration: ".format(iter))
         print("Init likelihood {}, Param (mu1, sigma1, mu2, sigma2, p): {}".format(liklihood_init, params_init))
         print("Final likelihood {}, Param (mu1, sigma1, mu2, sigma2, p): {}".format(track[-1], (mu1, sigma1, mu2, sigma2, p)))

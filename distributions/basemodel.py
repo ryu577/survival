@@ -320,3 +320,17 @@ class Base(object):
             ])
         return (np.matrix(probs), np.matrix(times))
     
+
+class GenericBase(object):    
+    def numr_grad_(self, x, prms):
+        eps = 1e-5
+        grd = np.zeros(5)
+        for i in range(5):
+            prms[i] -= eps
+            lik1 = self.loglik_p(x, prms)
+            prms[i] += eps
+            lik2 = self.loglik_p(x, prms)
+            grd[i] = (lik2 - lik1) / 2 / eps
+            prms[i] += eps
+        return grd    
+
