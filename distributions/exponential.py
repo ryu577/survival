@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+
 class Exponential():
     def __init__(self, ts, xs=None):
         if xs is not None:

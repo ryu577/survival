@@ -3,7 +3,7 @@ import unittest
 from distributions.weibull import Weibull
 from distributions.lomax import Lomax
 from distributions.loglogistic import *
-from distributions.mixture.expmixture import ExpMix
+from distributions.mixture.exponmix import *
 from distributions.mixture.gaussianmix import GaussMix
 from distributions.regressed.loglogisticregr import *
 from optimization.optimizn import bisection
@@ -144,10 +144,18 @@ def tst_gaussmix_grad():
     grd = gm.numr_grad(x)
     return grd
 
+def tst_exponmix_grad(size=100000):    
+    sams = ExpMix.sample_(.1,1.0,0.33,size)
+    exp_mx = ExpMix(sams)
+    return exp_mx.numr_grad_prms_(np.array([.1,1.0,.33]))/size
+
+
 def tst_gaussmix_fit():
     gm = GaussMix(-2,1,2,1,0.3)
     x = gm.samples(1000)
     param = gm.numr_fit(x)
+
+
 
 
 #######################################

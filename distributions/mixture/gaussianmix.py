@@ -5,9 +5,11 @@ from itertools import groupby
 import matplotlib.pyplot as plt
 
 class GaussMix():    
-    def __init__(self,mu1,sigma1,mu2,sigma2,p):
+    def __init__(self,mu1,sigma1,mu2,sigma2,p,x=None):
         self.mu1=mu1; self.sigma1=sigma1; self.mu2=mu2
         self.sigma2=sigma2; self.p=p
+        if x is not None:
+            self.x = x
     
     @staticmethod
     def samples_(mu1, sigma1, mu2, sigma2, p, n_samples=5000):
