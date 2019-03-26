@@ -1,6 +1,8 @@
 import numpy as np
+from distributions.mixture.basemixture import *
 
-class CensrdExpMix():
+
+class CensrdExpMix(BaseMix):
     def __init__(self, s, t, x, xs=None, xt=None, ws=None, wt=None, wx=None):
         self.s = s
         self.t = t
@@ -42,7 +44,7 @@ class CensrdExpMix():
         else:
             return self.loglik_(mu, lmb, u, self.s, self.t, self.x)
 
-    def loglik_prm(self, prms):
+    def loglik_prms(self, prms):
         #TODO: move to parent class
         [mu, lmb, u] = prms
         return self.loglik(mu, lmb, u)
