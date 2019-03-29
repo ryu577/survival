@@ -145,7 +145,7 @@ def tst_gaussmix_grad():
     grd = gm.numr_grad(x)
     return grd
 
-def tst_exponmix_grad(size=500000):    
+def tst_exponmix_grad(size=500000):
     sams = ExpMix.sample_(.1,1.0,0.33,size)
     exp_mx = ExpMix(sams)
     return exp_mx.numr_grad_prms_(np.array([.1,1.0,.33]))/size
