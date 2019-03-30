@@ -1,12 +1,18 @@
 import numpy as np
 import matplotlib.pyplot as plt
-
+from optimization.optimizn import *
 
 class Exponential():
     def __init__(self, ts, xs=None):
         if xs is not None:
-            numrtr = sum(ts)+sum(xs)
-            self.lmb = numrtr/len(ts)
+            denominator = sum(ts)+sum(xs)
+            self.lmb = len(ts)/denominator
+        else:
+            self.lmb = len(ts)/sum(ts)
+
+    @staticmethod
+    def samples_(lmb, size=1000):
+        return np.random.exponential(1/lmb,size=size)
 
     @staticmethod
     def linear_coefs_cdf(mu, tau1, tau2):
@@ -28,6 +34,22 @@ class Exponential():
                 0.5*(tau2**2-tau1**2)*(tau2+tau1))
         b = integ_dt/(tau2-tau1) - a*(tau2+tau1)/2
         return a, b
+
+    @staticmethod
+    def mle_uncensored(t):
+        return len(t)/sum(t)
+
+    @staticmethod
+    def mle_censored_full_info_loss(t, tau):
+        """
+        Exponential distribution where we censor the data at some 
+        value, tau and don't record anything about the censored data.
+        """
+        n = len(t)
+        fn = lambda lmb: 1/lmb - tau/(np.exp(lmb*tau)-1) - sum(t)/n
+        ## The assumption is that the rate is between 1e-3 and 1e4.
+        lmb = bisection(fn,1e-3,1e4)
+        return lmb
 
 
 def tst_plot_survival_approx():

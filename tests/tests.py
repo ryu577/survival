@@ -1,17 +1,19 @@
 import numpy as np
 import unittest
+import pandas as pd
+import time
+import matplotlib.pyplot as plt
+
 from distributions.weibull import Weibull
 from distributions.lomax import Lomax
 from distributions.loglogistic import *
+from distributions.exponential import *
 from distributions.mixture.exponmix import *
 from distributions.mixture.exponmix_censored import *
 from distributions.mixture.gaussianmix import GaussMix
 from distributions.regressed.loglogisticregr import *
 from optimization.optimizn import bisection
-import time
-import matplotlib.pyplot as plt
 from misc.misc import *
-import pandas as pd
 
 
 class TestDistributions(unittest.TestCase):
@@ -38,6 +40,9 @@ class TestDistributions(unittest.TestCase):
 
     def tst_grad_w_features(self):
         self.assertTrue(tst_grad_w_features())
+
+    def tst_expon_censor_full_info_loss(self):
+        self.assertTrue(tst_expon_censor_full_info_loss())
 
 
 def tst_weibull():
@@ -160,8 +165,32 @@ def tst_exponmix_censored_grad(size=100000):
 def tst_gaussmix_fit():
     gm = GaussMix(-2,1,2,1,0.3)
     x = gm.samples(1000)
-    param = gm.numr_fit(x)
+    param = gm.numr_fit(x,2)
+    return param
 
+
+def tst_expon_censor_full_info_loss(size=10000):
+    # Generate exponential data, censor it
+    # and don't keep any record of the censored
+    # data.
+    lmb = 10.0
+    all_dat = np.random.exponential(1/lmb,size=size)
+    tau = 1/lmb
+    t = all_dat[all_dat<tau]
+    x = all_dat[all_dat>tau]
+    lmb1 = Exponential.mle_censored_full_info_loss(t,tau)
+    lmb2 = len(t)/(sum(t)+sum(x))
+    return abs(lmb1-lmb)/lmb < 1e-1
+
+
+def tst_exponmix_censored_simple_est(size=100000):
+    mu=0.7; lmb=1.0; u=0.33; tau=1.1
+    s,t,x_cen,xs,xt = CensrdExpMix.samples_(mu,lmb,u,size,tau)
+    cem = CensrdExpMix(s,t,x_cen,xs,xt)
+    mu_hat = Exponential.mle_censored_full_info_loss(s,tau)
+    lmb_hat = Exponential.mle_censored_full_info_loss(t,tau)
+    u = CensrdExpMix.u_from_lmb_mu_simplified(mu_hat, lmb_hat, s,t,tau)
+    return mu_hat, lmb_hat, u
 
 #######################################
 ##

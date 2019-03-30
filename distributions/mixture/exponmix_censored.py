@@ -124,6 +124,26 @@ class CensrdExpMix(BaseMix):
                             self.t, self.x, self.xs, self.xt, 
                             self.ws, self.wt, self.wx, verbose)    
 
+    @staticmethod
+    def u_from_lmb_mu(lmb, mu, xs, xt, ws, wt):
+        ns=sum(ws); nt=sum(wt)
+        lmb_sur = np.mean(np.exp(-lmb*xt*wt))
+        mu_sur = np.mean(np.exp(-mu*xs*ws))
+        u = ns*(1-lmb_sur)/(ns*(1-lmb_sur)+nt*(1-mu_sur))
+        return u
+
+    @staticmethod
+    def u_from_lmb_mu_simplified(mu, lmb, s, t, tau):
+        """
+        Method u_from_lmb_mu for simple Ricks; without the hassles.
+        of weights on the data, variables censoring, etc.
+        (https://www.youtube.com/watch?v=CLqAFIMgpIU)
+        """
+        ns=sum(s); nt=sum(t)
+        lmb_sur = np.exp(-lmb*tau); mu_sur = np.exp(-mu*tau)
+        u = ns*(1-lmb_sur)/(ns*(1-lmb_sur)+nt*(1-mu_sur))
+        return u
+
 
 from distributions.lomax import Lomax
 
