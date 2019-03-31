@@ -192,6 +192,7 @@ def tst_exponmix_censored_simple_est(size=100000):
     u = CensrdExpMix.u_from_lmb_mu_simplified(mu_hat, lmb_hat, s,t,tau)
     return mu_hat, lmb_hat, u
 
+
 #######################################
 ##
 #######################################
