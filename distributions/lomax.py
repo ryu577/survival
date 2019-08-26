@@ -282,6 +282,13 @@ class Lomax(Base):
             + tau * k / (k - 1)) * 1 / (1 + lmb * tau)**k \
             + (tau + intervention_cost) * 1 / (1 + lmb * tau)**k
 
+    def mean(self):
+        return Lomax.mean_s(self.k,self.lmb)
+
+    @staticmethod
+    def mean_s(k,lmb):
+        return 1/lmb/(k-1)
+    
     @staticmethod
     def expectedDT_s(tau, k, lmb, intervention_cost):
         '''

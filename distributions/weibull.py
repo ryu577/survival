@@ -3,6 +3,7 @@ from scipy.stats import exponweib
 from misc.sigmoid import *
 from distributions.basemodel import *
 from optimization.optimizn import *
+from scipy.special import gamma
 
 class Weibull(Base):
     '''
@@ -260,6 +261,13 @@ class Weibull(Base):
                 (lmb**(k + 1)) * (sum(t**k) + sum(x**k))
             return np.array([delk, dellmb])
 
+    @staticmethod
+    def mean_s(k,lmb):
+        return lmb*gamma(1+1/k)
+
+    def mean(self):
+        return Weibull.mean_s(self.k,self.lmb)
+    
     @staticmethod
     def kappa_fn_(t, k):
         '''
