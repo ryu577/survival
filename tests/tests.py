@@ -3,17 +3,19 @@ import unittest
 import pandas as pd
 import time
 import matplotlib.pyplot as plt
+from scipy.stats import nbinom
 
-from distributions.weibull import Weibull
-from distributions.lomax import Lomax
-from distributions.loglogistic import *
-from distributions.exponential import *
-from distributions.mixture.exponmix import *
-from distributions.mixture.exponmix_censored import *
-from distributions.mixture.gaussianmix import GaussMix
-from distributions.regressed.loglogisticregr import *
-from optimization.optimizn import bisection
-from misc.misc import *
+from survival.distributions.weibull import Weibull
+from survival.distributions.lomax import Lomax
+from survival.distributions.loglogistic import *
+from survival.distributions.exponential import *
+from survival.distributions.mixture.exponmix import *
+from survival.distributions.mixture.exponmix_censored import *
+from survival.distributions.mixture.gaussianmix import GaussMix
+from survival.distributions.regressed.loglogisticregr import *
+from survival.optimization.optimizn import bisection
+from survival.misc.misc import *
+import survival.ptprocesses.negativebinomial as nb
 
 
 class TestDistributions(unittest.TestCase):
@@ -251,4 +253,15 @@ def mixed_loglogistic_model_censored():
     print("LogLogistic gradient descent took: "+str(end-start)+ " secs")
     print("The estimated parameters are:"+str(ll.alpha)+","+str(ll.beta))
 
+
+def nbinom_tst():
+    t_arr = np.ones(100)
+    m=10; theta=.7
+    ps = t_arr/(t_arr+theta)
+    n_arr = nbinom.rvs(m,ps)
+    nb.NBinom.loglik(n_arr,t_arr,m,theta)
+    nb.NBinom.numeric_grad(n_arr,t_arr,m,theta)
+    nb2=nb.NBinom2(n_arr,t_arr)
+    params = nb2.gradient_descent(verbose=True)
+    return sum(params-np.array([m,theta]))<1e-1
 

@@ -1,8 +1,8 @@
 import numpy as np
 from scipy.stats import exponweib
-from misc.sigmoid import *
-from distributions.basemodel import *
-from optimization.optimizn import *
+from survival.misc.sigmoid import *
+from survival.distributions.basemodel import *
+from survival.optimization.optimizn import *
 
 class Weibull(Base):
     '''

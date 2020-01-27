@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.stats import lomax
-from distributions.basemodel import *
-from optimization.optimizn import bisection
+from survival.distributions.basemodel import *
+from survival.optimization.optimizn import bisection
 
 class Lomax(Base):
     '''

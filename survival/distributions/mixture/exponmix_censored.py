@@ -1,7 +1,11 @@
 import numpy as np
 from distributions.mixture.basemixture import *
 from distributions.exponential import Exponential
+from distributions.lomax import Lomax
 from scipy.stats import expon
+import random
+import matplotlib.pyplot as plt
+
 
 class CensrdExpMix(BaseMix):
     def __init__(self, s, t, x, xs=None, xt=None, ws=None, wt=None, wx=None):
@@ -149,13 +153,12 @@ class CensrdExpMix(BaseMix):
     def fit_censored_data(s,t,x_cen,censor):
         scale0 = Exponential.fit_censored_data(s, censor)
         scale1 = Exponential.fit_censored_data(t, censor)
-        censor0_prob = 1- expon.cdf(censor, loc=0, scale=scale0)
+        censor0_prob = 1 - expon.cdf(censor, loc=0, scale=scale0)
         censor1_prob = 1 - expon.cdf(censor, loc=0, scale=scale1)
-        u = (len(x_cen)/(len(s) + len(t) + len(x_cen)) - censor1_prob) / (censor0_prob - censor1_prob)
+        u = (len(x_cen)/(len(s) + len(t) + len(x_cen)) - censor1_prob) \
+                    / (censor0_prob - censor1_prob)
         return 1/scale0, 1/scale1, u
 
-
-from distributions.lomax import Lomax
 
 def lomax_mix():
     k1 = 1.1; lmb1 = 20
@@ -170,10 +173,9 @@ def lomax_mix():
     t = t_samples[t_samples<censor]
     s = s_samples[s_samples<censor]
     x_censored = np.ones(sum(t_samples>censor)+sum(s_samples>censor))
-    
+
+
 def tst_exponmix_censored_fit(size=100000):
-    import random
-    import matplotlib.pyplot as plt
     censor = 1.1
     lmb0 = .7
     lmb1 = 1
@@ -182,7 +184,8 @@ def tst_exponmix_censored_fit(size=100000):
     for i in range(50):
         s,t,x_cen,xs,xt = CensrdExpMix.samples_(lmb0,lmb1,u,size,censor)
         lmb0_hat, lmb1_hat, u_hat = CensrdExpMix.fit_censored_data(s,t,x_cen, censor)
-        print("true lambda0 {}, lambda1 {}, mix {}; estimate lamda0 {}, lambda1 {}, mix {}".format(lmb0, lmb1, u, lmb0_hat, lmb1_hat, u_hat))
+        print("true lambda0 {}, lambda1 {}, mix {}; estimate lamda0 {}, lambda1 {}, mix {}"\
+                        .format(lmb0, lmb1, u, lmb0_hat, lmb1_hat, u_hat))
         track.append((lmb0_hat, lmb1_hat, u))
 
     plt.subplot(3, 1, 1)
@@ -191,8 +194,8 @@ def tst_exponmix_censored_fit(size=100000):
     plt.plot(list(map(lambda x: x[1], track)))
     plt.subplot(3, 1, 3)
     plt.plot(list(map(lambda x: x[2], track)))
-    plt.title("Estimation for censored exponential mix. True params: λ1 = {}, λ2 = {}, u = {}".format(lmb0, lmb1, u))
+    plt.title("Estimation for censored exponential mix. True params: λ1 = {}, λ2 = {}, u = {}"\
+                .format(lmb0, lmb1, u))
     plt.show()
-
 
 

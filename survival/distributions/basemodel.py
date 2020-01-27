@@ -2,7 +2,7 @@ import abc
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.integrate as integrate
-from misc.misc import *
+from survival.misc.misc import *
 
 
 class Base(object):

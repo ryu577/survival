@@ -1,11 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from distributions.weibull import *
-from distributions.lomax import *
-from distributions.lognormal import *
-from distributions.loglogistic import *
-from nonparametric.non_parametric import *
-from markovchains.markovchains import *
+from survival.distributions.weibull import *
+from survival.distributions.lomax import *
+from survival.distributions.lognormal import *
+from survival.distributions.loglogistic import *
+from survival.nonparametric.non_parametric import *
+from survival.markovchains.markovchains import *
 from datetime import datetime
 from numpy import genfromtxt
 import os

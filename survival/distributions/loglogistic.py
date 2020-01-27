@@ -1,8 +1,8 @@
 import numpy as np
-from misc.sigmoid import *
-from distributions.basemodel import *
-from distributions.lomax import *
-from distributions.weibull import *
+from survival.misc.sigmoid import *
+from survival.distributions.basemodel import *
+from survival.distributions.lomax import *
+from survival.distributions.weibull import *
 import pandas as pd
 
 class LogLogistic(Base):

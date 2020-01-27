@@ -1,8 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from optimization.optimizn import *
+from survival.optimization.optimizn import *
 from scipy.stats import expon
 from scipy.optimize import minimize
+
 
 class Exponential():
     def __init__(self, ts, xs=None):
@@ -57,9 +58,11 @@ class Exponential():
     def fit_censored_data(x, censor):
         init_scale = 1/np.mean(x)
         def log_censored_likelihood(scale):
-            return -np.sum(np.log(expon.pdf(x, loc=0, scale=scale) / expon.cdf(censor, loc=0, scale=scale)))
+            return -np.sum(np.log(expon.pdf(x, loc=0, scale=scale) \
+                    / expon.cdf(censor, loc=0, scale=scale)))
         scale_result = minimize(log_censored_likelihood, init_scale, method='Nelder-Mead')
         return scale_result.x[0] # convert scale to lambda
+
 
 def tst_plot_survival_approx():
     mu1 = 0.012805
