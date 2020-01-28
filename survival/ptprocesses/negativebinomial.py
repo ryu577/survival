@@ -71,4 +71,13 @@ class NBinom_T(NBinom):
         self.m=m
         self.theta=theta
 
-
+def sample_usage():
+    t_arr = np.ones(100)
+    m=10; theta=.7
+    ps = t_arr/(t_arr+theta)
+    n_arr = nbinom.rvs(m,ps)
+    nb.NBinom.loglik(n_arr,t_arr,m,theta)
+    nb.NBinom.numeric_grad(n_arr,t_arr,m,theta)
+    nb2=nb.NBinom2(n_arr,t_arr)
+    params = nb2.gradient_descent(verbose=True)
+    return sum(params-np.array([m,theta]))<1e-1
