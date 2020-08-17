@@ -3,9 +3,9 @@ from scipy.stats import exponweib
 from survival.misc.sigmoid import *
 from survival.distributions.basemodel import *
 from survival.optimization.optimizn import *
-from misc.sigmoid import *
-from distributions.basemodel import *
-from optimization.optimizn import *
+from survival.misc.sigmoid import *
+from survival.distributions.basemodel import *
+from survival.optimization.optimizn import *
 from scipy.special import gamma
 
 class Weibull(Base):

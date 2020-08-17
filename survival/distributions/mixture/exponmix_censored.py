@@ -1,7 +1,7 @@
 import numpy as np
-from distributions.mixture.basemixture import *
-from distributions.exponential import Exponential
-from distributions.lomax import Lomax
+from survival.distributions.mixture.basemixture import *
+from survival.distributions.exponential import Exponential
+from survival.distributions.lomax import Lomax
 from scipy.stats import expon
 import random
 import matplotlib.pyplot as plt

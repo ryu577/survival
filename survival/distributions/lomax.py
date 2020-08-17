@@ -369,3 +369,15 @@ class Lomax(Base):
         return k, lmb
 
 #[1] https://onedrive.live.com/view.aspx?resid=7CAD132A61933826%216310&id=documents&wd=target%28Math%2FSurvival.one%7C33EFE553-AA82-43B5-AD47-9900633D2A1E%2FLomax%20Wts%7C0902ADB4-A003-4CFF-98E4-95870B6E7759%2F%29onenote:https://d.docs.live.net/7cad132a61933826/Documents/Topics/Math/Survival.one#Lomax%20Wts&section-id={33EFE553-AA82-43B5-AD47-9900633D2A1E}&page-id={0902ADB4-A003-4CFF-98E4-95870B6E7759}&end
+
+def lomax_exponmix():
+    #### Verify Lomax equivalence with exponential-mix.
+    k=4; theta=0.1
+    ## In numpy's definition, the scale, theta is inverse of Ross definition.
+    lm = np.random.gamma(k,1/theta,size=1000)
+    lomax_mix=np.random.exponential(1/lm)
+    mean1=np.mean(lomax_mix)
+    lomax_direct=lomax.rvs(c=k,scale=theta,size=1000)
+    mean2=np.mean(lomax_direct)
+    mean3 = theta/(k-1)
+
