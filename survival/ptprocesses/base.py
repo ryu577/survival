@@ -4,7 +4,7 @@ import abc
 class Base(object):
     def gradient_descent(self, params=np.array([2.0, 2.0]),numIter=2001,
         verbose=False, set_zero=60,
-        step_lengths=[1e-8, 1e-7, 1e-5, 1e-3, 1e-2, .1, 1,2]
+        step_lengths=[1e-8, 1e-7, 1e-5, 1e-3, 1e-2, .1, 1, 2]
         ):
         '''
         Performs gradient descent to fit the parameters of our distribution.
